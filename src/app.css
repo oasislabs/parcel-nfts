@@ -3,39 +3,39 @@
 @tailwind utilities;
 
 @layer base {
-  html {
-    font-size: 18px;
-  }
+	html {
+		font-size: 18px;
+	}
 
-  h1 {
-    @apply my-7;
-  }
+	h1 {
+		@apply my-7;
+	}
 
-  h2 {
-    @apply my-6;
-  }
+	h2 {
+		@apply my-6;
+	}
 
-  a {
-    @apply underline;
-  }
+	a {
+		@apply underline;
+	}
 
-  p {
-    @apply mb-5 leading-6;
-  }
+	p {
+		@apply mb-5 leading-6;
+	}
 
-  b {
-    @apply font-medium;
-  }
+	b {
+		@apply font-medium;
+	}
 
-  ul {
-    @apply list-disc;
-  }
+	ul {
+		@apply list-disc;
+	}
 
-  ol {
-    @apply list-decimal;
-  }
+	ol {
+		@apply list-decimal;
+	}
 
-  li {
-    @apply leading-6 my-3 pl-1;
-  }
+	li {
+		@apply leading-6 my-3 pl-1;
+	}
 }

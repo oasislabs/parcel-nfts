@@ -1,0 +1,41 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-size: 18px;
+  }
+
+  h1 {
+    @apply my-7;
+  }
+
+  h2 {
+    @apply my-6;
+  }
+
+  a {
+    @apply underline;
+  }
+
+  p {
+    @apply mb-5 leading-6;
+  }
+
+  b {
+    @apply font-medium;
+  }
+
+  ul {
+    @apply list-disc;
+  }
+
+  ol {
+    @apply list-decimal;
+  }
+
+  li {
+    @apply leading-6 my-3 pl-1;
+  }
+}

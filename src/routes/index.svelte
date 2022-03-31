@@ -1,42 +1,43 @@
-<script lang="ts" global>
+<script lang="ts">
 	import { onMount } from 'svelte';
 
-	import {
-		account as ethAccount,
-		init as connectEthProvider,
-		network as ethNetwork
-	} from '../eth-store';
+	import { error } from '../stores/error';
 
-	onMount(async () => {
-		await connectEthProvider();
-	});
+	import { address as ethAddress, network as ethNetwork } from '../stores/eth';
+
+	import { identity as parcelIdentity, connect as connectToParcel } from '../stores/parcel';
 </script>
 
 <h1 class="font-bold text-center">Mint NFTs</h1>
-{#await Promise.all([$ethAccount, $ethNetwork])}
-	<p class="text-center">
-		Connecting to<br />
-		<a href="https://metamask.io/" rel="nofollow" target="_blank">MetaMask</a>...
-	</p>
-{:then [account, network]}
+{#if $error}
+	<span class="text-red-500">{$error}</span>
+{/if}
+{#if $ethAddress && $ethNetwork}
 	<p class="text-center">
 		Connected to
-		<span class="font-mono">{`${account.substr(0, 7)}…${account.substr(-5, 5)}`}</span><br />
+		<span class="font-mono">{`${$ethAddress.substr(0, 7)}…${$ethAddress.substr(-5, 5)}`}</span><br
+		/>
 		on the
-		{#if network?.chainId === 0xa515}
+		{#if $ethNetwork?.chainId === 0xa515}
 			<span>Emerald&nbsp;Testnet</span>.
-		{:else if network?.chainId === 0xa516}
+		{:else if $ethNetwork?.chainId === 0xa516}
 			<span>Emerald&nbsp;Mainnet</span>.
 		{:else}
-			<span class="text-red-500 font-bold">{network?.name ?? 'unknown'} network</span>.
+			<span class="text-red-500 font-bold">{$ethNetwork?.name ?? 'unknown'} network</span>.
 		{/if}
 	</p>
-	{#if $ethNetwork?.chainId !== 0xa515 && $ethNetwork?.chainId !== 0xa516}
-		<p class="text-center">Please connect to the Emerald Testnet or Emerald Mainnet.</p>
+	{#if $ethNetwork?.chainId === 0xa515 || $ethNetwork?.chainId === 0xa516}
+		{#if $parcelIdentity === undefined}
+			<button class="block mx-auto" on:click={connectToParcel}>Connect to Parcel</button>
+		{:else}
+			<p class="text-center">Acting as Parcel identity: {$parcelIdentity.id}</p>
+			<form action="javascript:void(0)" />
+		{/if}
 	{:else}
-		<button>Connect to Parcel</button>
-		<form action="javascript:void(0)" />
+		<p class="text-center">Please connect to the Emerald Testnet or Emerald Mainnet.</p>
 	{/if}
-{:catch error}
-	<span>Could not connect to MetaMask: {error.toString()}</span>
-{/await}
+{:else}
+	<p class="text-center">
+		Connecting to <a href="https://metamask.io/" rel="nofollow" target="_blank">MetaMask</a>...
+	</p>
+{/if}

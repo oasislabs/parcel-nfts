@@ -8,7 +8,12 @@ const config = {
 	preprocess: preprocess(),
 
 	kit: {
-		adapter: adapter()
+		adapter: adapter(),
+		vite: {
+			optimizeDeps: {
+				exclude: ['jsrsasign', 'node-fetch']
+			}
+		}
 	}
 };
 

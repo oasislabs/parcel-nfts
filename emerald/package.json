@@ -1,6 +1,6 @@
 {
   "private": true,
-  "name": "contracts",
+  "name": "parcel-nft-contracts",
   "version": "0.0.1",
   "license": "MIT",
   "main": "lib/src/index.js",
@@ -8,7 +8,7 @@
   "types": "lib/src/index.d.ts",
   "scripts": {
     "lint": "solhint contracts/**.sol",
-    "fmt": "solhint --fix contracts/**.sol",
+    "format": "solhint --fix contracts/**.sol",
     "build": "hardhat compile && tsc -b",
     "watch": "hardhat watch",
     "test": "hardhat test",

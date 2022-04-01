@@ -117,7 +117,7 @@ type NftDescriptor {'{'}
         {/if}
         {#if bundle}
           <span class="text-green-700">Ready to create {bundle.manifest.nfts.length} tokens.</span>
-          <br/>
+          <br />
           <input class="mt-2" type="submit" value="Do it!" />
           {#if mintError}
             <span class="text-red-500 font-bold">Unable to mint: {mintError.toString()}.</span>.

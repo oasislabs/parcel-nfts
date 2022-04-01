@@ -1,0 +1,14 @@
+{
+  "0 debug pnpm:scope": {
+    "selected": 1
+  },
+  "1 error pnpm": {
+    "code": "ERR_PNPM_OUTDATED_NO_LOCKFILE",
+    "err": {
+      "name": "pnpm",
+      "message": "No lockfile in this directory. Run `pnpm install` to generate one.",
+      "code": "ERR_PNPM_OUTDATED_NO_LOCKFILE",
+      "stack": "pnpm: No lockfile in this directory. Run `pnpm install` to generate one.\n    at outdated (/Users/nhynes/.local/pnpm-global/5/node_modules/.pnpm/pnpm@6.32.3/node_modules/pnpm/dist/pnpm.cjs:123236:15)\n    at /Users/nhynes/.local/pnpm-global/5/node_modules/.pnpm/pnpm@6.32.3/node_modules/pnpm/dist/pnpm.cjs:123351:39\n    at Array.map (<anonymous>)\n    at outdatedDepsOfProjects (/Users/nhynes/.local/pnpm-global/5/node_modules/.pnpm/pnpm@6.32.3/node_modules/pnpm/dist/pnpm.cjs:123349:31)\n    at async Promise.all (index 0)\n    at async outdatedDepsOfProjects (/Users/nhynes/.local/pnpm-global/5/node_modules/.pnpm/pnpm@6.32.3/node_modules/pnpm/dist/pnpm.cjs:123337:38)\n    at async Object.handler [as outdated] (/Users/nhynes/.local/pnpm-global/5/node_modules/.pnpm/pnpm@6.32.3/node_modules/pnpm/dist/pnpm.cjs:176488:34)\n    at async /Users/nhynes/.local/pnpm-global/5/node_modules/.pnpm/pnpm@6.32.3/node_modules/pnpm/dist/pnpm.cjs:182194:21\n    at async run (/Users/nhynes/.local/pnpm-global/5/node_modules/.pnpm/pnpm@6.32.3/node_modules/pnpm/dist/pnpm.cjs:182168:34)\n    at async runPnpm (/Users/nhynes/.local/pnpm-global/5/node_modules/.pnpm/pnpm@6.32.3/node_modules/pnpm/dist/pnpm.cjs:182387:5)"
+    }
+  }
+}

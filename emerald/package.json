@@ -1,0 +1,51 @@
+{
+  "private": true,
+  "name": "contracts",
+  "version": "0.0.1",
+  "license": "MIT",
+  "scripts": {
+    "lint": "solhint contracts/**.sol",
+    "fmt": "solhint --fix contracts/**.sol",
+    "build": "hardhat compile",
+    "watch": "hardhat watch",
+    "test": "hardhat test",
+    "prepublishOnly": "yarn build"
+  },
+  "files": [
+    "abis",
+    "contracts",
+    "lib",
+    "src"
+  ],
+  "devDependencies": {
+    "@defi-wonderland/smock": "^2.0.7",
+    "@ethersproject/abi": "^5.6.0",
+    "@ethersproject/abstract-provider": "^5.6.0",
+    "@ethersproject/abstract-signer": "^5.6.0",
+    "@ethersproject/bytes": "^5.6.1",
+    "@ethersproject/providers": "^5.6.2",
+    "@nomiclabs/hardhat-ethers": "^2.0.5",
+    "@nomiclabs/hardhat-waffle": "^2.0.2",
+    "@openzeppelin/contracts": "^4.5.0",
+    "@typechain/ethers-v5": "^9.0.0",
+    "@typechain/hardhat": "^4.0.0",
+    "@types/chai": "^4.3.0",
+    "@types/mocha": "^9.1.0",
+    "@types/node": "^16.11.14",
+    "canonicalize": "^1.0.8",
+    "chai": "^4.3.6",
+    "erc721a": "^3.1.0",
+    "ethereum-waffle": "^3.4.0",
+    "ethers": "^5.6.2",
+    "hardhat": "^2.8.4",
+    "hardhat-watcher": "^2.1.1",
+    "lodash": "^4.17.21",
+    "prettier": "^2.5.1",
+    "prettier-plugin-solidity": "^1.0.0-beta.13",
+    "solhint": "^3.3.7",
+    "solidity-coverage": "^0.7.19",
+    "ts-node": "^10.5.0",
+    "typechain": "^7.0.0",
+    "typescript": "^4.5.5"
+  }
+}

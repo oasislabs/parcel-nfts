@@ -1,17 +1,54 @@
-import { NFTStorage, File } from 'nft.storage';
+import type Parcel from '@oasislabs/parcel';
+import type { DocumentId, Token, TokenId } from '@oasislabs/parcel';
+import type { JSONSchemaType } from 'ajv';
+import Ajv from 'ajv';
+import addFormats from 'ajv-formats';
+import type { Signer } from 'ethers';
+import { NFTStorage } from 'nft.storage';
+import store2 from 'store2';
+import { get } from 'svelte/store';
 
-type Manifest = {
+import type { NFT } from '@oasislabs/parcel-nft-contracts';
+import { NFTFactory } from '@oasislabs/parcel-nft-contracts';
+
+import { provider as ethProvider } from '../stores/eth';
+
+interface Manifest {
   title: string;
   symbol: string;
   nfts: NftDescriptor[];
-};
+}
 
-type NftDescriptor = {
+interface NftDescriptor {
   title?: string;
   description?: string;
   publicImage: string;
   privateData: string;
-  attributes: any[];
+  attributes: object[];
+}
+
+const NFT_DESCRIPTOR_SCHEMA: JSONSchemaType<NftDescriptor> = {
+  type: 'object',
+  properties: {
+    title: { type: 'string', nullable: true },
+    description: { type: 'string', nullable: true },
+    publicImage: { type: 'string' },
+    privateData: { type: 'string' },
+    attributes: { type: 'array', items: { type: 'object' }, uniqueItems: true },
+  },
+  required: ['publicImage', 'privateData'],
+  additionalProperties: false,
+};
+
+const MANIFEST_SCHEMA: JSONSchemaType<Manifest> = {
+  type: 'object',
+  properties: {
+    title: { type: 'string' },
+    symbol: { type: 'string' },
+    nfts: { type: 'array', items: NFT_DESCRIPTOR_SCHEMA, uniqueItems: true },
+  },
+  required: ['title', 'symbol', 'nfts'],
+  additionalProperties: false,
 };
 
 export class Bundle {
@@ -43,31 +80,38 @@ export class Bundle {
   }
 
   public async validate(): Promise<void> {
-    let invalid = [];
-    let missing = [];
+    const ajv = new Ajv({ allErrors: true });
+    addFormats(ajv);
+
+    const validate = ajv.compile(MANIFEST_SCHEMA);
+    if (!validate(this.manifest)) {
+      throw new ValidationErrors(validate.errors!.map((e) => e.toString()));
+    }
+
+    let missing: string[] = [];
     let seen = new Set<string>();
-    let dupes = [];
+    let dupes: string[] = [];
     const checkMissingOrDuped = (fileName: string) => {
       if (!this.files.has(fileName)) missing.push(fileName);
       if (seen.has(fileName)) dupes.push(fileName);
       seen.add(fileName);
     };
     this.manifest.nfts.forEach((descriptor, i) => {
-      if (descriptor.publicImage === undefined || descriptor.privateData === undefined) {
-        invalid.push(i);
-        return;
-      }
       checkMissingOrDuped(descriptor.publicImage);
       checkMissingOrDuped(descriptor.privateData);
     });
-    throw new ValidationErrors([
-      ...invalid.map((f) => `Invalid descriptor(s) at position(s): ${f}.`),
+    const validationErrors = [
       ...missing.map((f) => `Missing: ${f}.`),
       ...dupes.map((f) => `Duplicated: ${f}.`),
-    ]);
+    ];
+    if (validationErrors.length !== 0) {
+      throw new ValidationErrors(validationErrors);
+    }
   }
 
   public async mint(): Promise<void> {
+    const nft = new NFTFactory(get(ethProvider).getSigner());
+    // nft.deploy(manifest.);
     // 1. create nft contract
     // 2. upload public images
     // 3. create parcel tokens

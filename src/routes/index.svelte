@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Bundle, ValidationErrors } from '../lib/bundle';
+  import { DOCUMENTATION as BUNDLE_TYPES, Bundle, ValidationErrors } from '../lib/bundle';
   import { error } from '../stores/error';
   import { address as ethAddress, network as ethNetwork } from '../stores/eth';
   import { identity as parcelIdentity, connect as connectToParcel } from '../stores/parcel';
@@ -13,19 +13,22 @@
     validationErrors = [];
     try {
       bundle = await Bundle.create(files);
+      bundle.validate();
     } catch (e) {
       if (e instanceof ValidationErrors) {
         validationErrors = e.validationErrors;
         return;
-      } else {
-        console.error(e);
-        throw new ValidationErrors([e.toString()]);
       }
+      console.error(e);
+      if (e instanceof Error) {
+        throw new ValidationErrors([e.message]);
+      }
+      throw new ValidationErrors(['an unknown error occured']);
     }
   }
 
   async function mintNfts() {
-    await bundle.mint();
+    await bundle?.mint();
   }
 </script>
 
@@ -61,38 +64,7 @@
               <span class="font-mono text-sm">manifest.json</span> - a JSON file describing the
               remaining inputs that has schema:
               <pre
-                class="my-2 border-0 border-l-4 border-gray-400 border-solid px-2 py-0">type Manifest = {'{'}
-  // The collection title.
-  title: string;
-
-  // The collection symbol.
-  symbol: string;
-
-  // A description of the contents of the collection.
-  nfts: NftDescriptor[];
-{'}'}
-
-type NftDescriptor {'{'}
-  // The optional title of the NFT.
-  title?: string;
-
-  // The optional description of the NFT.
-  description?: string;
-
-  // The name of the public (image) file.
-  // Must be uploaded alongside the manifest.
-  publicImage: string
-
-  // The name of the private (data) file.
-  // Must be uploaded alongside the manifest.
-  privateData: string
-
-  // Attribute data passed directly into the NFT metadata.
-  // @see <a href="https://docs.opensea.io/docs/metadata-standards"
-                  >https://docs.opensea.io/docs/metadata-standards</a
-                >
-  attributes: JSON[]
-{'}'}</pre>
+                class="my-2 border-0 border-l-4 border-gray-400 border-solid px-2 py-0">{BUNDLE_TYPES}</pre>
             </li>
             <li>all of the public images listed in the manifest</li>
             <li>all of the private data listed in the manifest</li>

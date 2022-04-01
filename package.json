@@ -26,6 +26,7 @@
     "eslint-plugin-svelte3": "^3.2.1",
     "ethers": "^5.6.2",
     "ky": "^0.30.0",
+    "nft.storage": "^6.1.0",
     "postcss": "^8.4.12",
     "prettier": "^2.5.1",
     "prettier-plugin-svelte": "^2.5.0",

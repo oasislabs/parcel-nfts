@@ -50,6 +50,10 @@ contract NFT is ERC721A, Ownable {
         _safeMint(msg.sender, _quantity);
     }
 
+    function mintTo(address whom, uint256 _quantity) external onlyOwner {
+        _safeMint(whom, _quantity);
+    }
+
     function addToPremintList(address[] calldata addresses) external onlyOwner {
         for (uint256 i; i < addresses.length; ++i) {
             premintList[addresses[i]] = true;

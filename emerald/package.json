@@ -1,6 +1,6 @@
 {
   "private": true,
-  "name": "parcel-nft-contracts",
+  "name": "@oasislabs/parcel-nft-contracts",
   "version": "0.0.1",
   "license": "MIT",
   "main": "lib/src/index.js",

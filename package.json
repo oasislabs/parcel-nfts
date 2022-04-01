@@ -1,6 +1,7 @@
 {
-  "name": "parcel-nfts",
+  "name": "@oasislabs/parcel-nfts",
   "version": "0.0.1",
+  "license": "MIT",
   "scripts": {
     "dev": "svelte-kit dev",
     "build": "svelte-kit build",
@@ -14,10 +15,13 @@
   },
   "devDependencies": {
     "@oasislabs/parcel": "link:/Users/nhynes/Projects/parcel/parcel2/gateway/clients/typescript",
+    "@oasislabs/parcel-nft-contracts": "workspace:emerald",
     "@sveltejs/adapter-static": "^1.0.0-next.29",
     "@sveltejs/kit": "next",
     "@typescript-eslint/eslint-plugin": "^5.10.1",
     "@typescript-eslint/parser": "^5.10.1",
+    "ajv": "^8.11.0",
+    "ajv-formats": "^2.1.1",
     "autoprefixer": "^10.4.4",
     "bn.js": "^5.2.0",
     "cssnano": "^5.1.5",

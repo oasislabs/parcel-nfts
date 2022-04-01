@@ -4,10 +4,12 @@ importers:
   .:
     specifiers:
       '@oasislabs/parcel': link:/Users/nhynes/Projects/parcel/parcel2/gateway/clients/typescript
+      '@oasislabs/parcel-nft-contracts': workspace:emerald
       '@sveltejs/adapter-static': ^1.0.0-next.29
       '@sveltejs/kit': next
       '@typescript-eslint/eslint-plugin': ^5.10.1
       '@typescript-eslint/parser': ^5.10.1
+      ajv: ^8.11.0
       autoprefixer: ^10.4.4
       bn.js: ^5.2.0
       cssnano: ^5.1.5
@@ -28,10 +30,12 @@ importers:
       typescript: ~4.6.2
     devDependencies:
       '@oasislabs/parcel': link:../parcel2/gateway/clients/typescript
+      '@oasislabs/parcel-nft-contracts': link:emerald
       '@sveltejs/adapter-static': 1.0.0-next.29
       '@sveltejs/kit': 1.0.0-next.304_svelte@3.46.4
       '@typescript-eslint/eslint-plugin': 5.16.0_779783495dcf5ccdc83bcb9708311c62
       '@typescript-eslint/parser': 5.16.0_eslint@7.32.0+typescript@4.6.3
+      ajv: 8.11.0
       autoprefixer: 10.4.4_postcss@8.4.12
       bn.js: 5.2.0
       cssnano: 5.1.5_postcss@8.4.12
@@ -67,6 +71,7 @@ importers:
       '@types/chai': ^4.3.0
       '@types/mocha': ^9.1.0
       '@types/node': ^16.11.14
+      ajv: ^8.11.0
       canonicalize: ^1.0.8
       chai: ^4.3.6
       erc721a: ^3.1.0
@@ -97,6 +102,7 @@ importers:
       '@types/chai': 4.3.0
       '@types/mocha': 9.1.0
       '@types/node': 16.11.26
+      ajv: 8.11.0
       canonicalize: 1.0.8
       chai: 4.3.6
       erc721a: 3.1.0
@@ -15318,7 +15324,9 @@ packages:
   github.com/ethereumjs/ethereumjs-abi/ee3994657fa7a427238e6ba92a84d0b529bbcde0:
     resolution:
       {
-        tarball: https://codeload.github.com/ethereumjs/ethereumjs-abi/tar.gz/ee3994657fa7a427238e6ba92a84d0b529bbcde0,
+        commit: ee3994657fa7a427238e6ba92a84d0b529bbcde0,
+        repo: git+ssh://git@github.com/ethereumjs/ethereumjs-abi.git,
+        type: git,
       }
     name: ethereumjs-abi
     version: 0.6.8

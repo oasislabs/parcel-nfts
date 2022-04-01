@@ -13,6 +13,11 @@ const config = {
       optimizeDeps: {
         exclude: ['jsrsasign', 'node-fetch'],
       },
+      server: {
+        fs: {
+          allow: ['./emerald/lib'],
+        },
+      },
     },
   },
 };

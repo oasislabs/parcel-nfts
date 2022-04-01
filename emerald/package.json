@@ -3,13 +3,12 @@
   "name": "@oasislabs/parcel-nft-contracts",
   "version": "0.0.1",
   "license": "MIT",
-  "main": "lib/src/index.js",
   "module": "lib/src/index.js",
   "types": "lib/src/index.d.ts",
   "scripts": {
     "lint": "solhint contracts/**.sol",
     "format": "solhint --fix contracts/**.sol",
-    "build": "hardhat compile && tsc -b",
+    "build": "hardhat compile && tsc -p tsconfig.esm.json",
     "watch": "hardhat watch",
     "test": "hardhat test",
     "prepublishOnly": "yarn build"

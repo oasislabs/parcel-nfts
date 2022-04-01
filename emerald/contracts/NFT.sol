@@ -51,13 +51,16 @@ contract NFT is ERC721A, Ownable {
     }
 
     function addToPremintList(address[] calldata addresses) external onlyOwner {
-        for(uint256 i; i < addresses.length; ++i) {
+        for (uint256 i; i < addresses.length; ++i) {
             premintList[addresses[i]] = true;
         }
     }
 
-    function removeFromPremintList(address[] calldata addresses) external onlyOwner {
-        for(uint256 i; i < addresses.length; ++i) {
+    function removeFromPremintList(address[] calldata addresses)
+        external
+        onlyOwner
+    {
+        for (uint256 i; i < addresses.length; ++i) {
             delete premintList[addresses[i]];
         }
     }

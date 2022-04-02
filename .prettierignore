@@ -19,3 +19,4 @@ coverage.json
 gasReporterOutput.json
 emerald/lib
 typechain-types
+abis

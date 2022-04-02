@@ -50,7 +50,7 @@ export class Bundle {
       throw new ValidationErrors([`Failed to load manifest.json: ${e}`]);
     }
 
-    const ajv = new Ajv({ allErrors: true });
+    const ajv = addFormats(new Ajv({ allErrors: true }));
 
     const validate = ajv.compile(MANIFEST_SCHEMA);
     if (!validate(manifest)) {
@@ -113,7 +113,6 @@ export class Bundle {
     try {
       console.log('mint: uploading images');
       imagesUpload = await this.uploadPublicImages(nftStorage);
-      // This is already idempotent;
     } catch (e: any) {
       throw wrapErr(e, 'failed to upload public images');
     }
@@ -123,9 +122,8 @@ export class Bundle {
     try {
       console.log('mint: deploying contract');
       nft = await this.deployNFTContract(signer);
-      localStorage.k;
     } catch (e: any) {
-      throw wrapErr(e, 'failed to create NFT');
+      throw wrapErr(e, 'failed to create NFT contract');
     }
 
     // 3. Create parcel tokens.
@@ -259,7 +257,7 @@ export class Bundle {
               {
                 name: descriptor.title,
                 description: descriptor.description,
-                image: `ipfs://${imagesCid}/${imageFilenames[i]}`,
+                image: `${nftStorageLink(imagesCid)}/${imageFilenames[i]}`,
                 parcel_token: parcelTokens[i].id,
                 attributes: descriptor.attributes,
               },

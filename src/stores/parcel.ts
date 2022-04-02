@@ -18,11 +18,12 @@ export const parcel = unwritable(parcelStore);
 function makeParcel(ethAddr: string): Parcel {
   const tokenProvider = {
     principal: ethAddr,
-    scopes: ['parcel.safe'],
+    scopes: ['parcel.full'],
     ethProviderUsingAccountIndex: 0,
   };
   return new Parcel(tokenProvider, {
     apiUrl: 'http://localhost:4242/v1',
+    storageUrl: 'http://localhost:4244',
   });
 }
 
@@ -33,7 +34,6 @@ const identityStore: Writable<Identity | undefined> = writable(undefined, functi
       return;
     }
     try {
-      console.log('getting current identity');
       set(await parcel.getCurrentIdentity());
       return;
     } catch (e: any) {

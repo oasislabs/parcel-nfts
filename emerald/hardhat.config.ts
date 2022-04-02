@@ -38,8 +38,8 @@ task(TASK_EXPORT_ABIS, async (_args, hre) => {
 const config: HardhatUserConfig = {
   networks: {
     hardhat: {
-      chainId: 1337 // @see https://hardhat.org/metamask-issue.html
-    }
+      chainId: 1337, // @see https://hardhat.org/metamask-issue.html
+    },
   },
   solidity: {
     version: '0.8.9',

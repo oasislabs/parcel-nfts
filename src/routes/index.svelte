@@ -8,6 +8,10 @@
   let bundle: Bundle | undefined = undefined;
   let validationErrors: string[] = [];
   let mintError: Error | undefined;
+  let minting = false;
+
+  let tokenAddress: string | undefined;
+  let tokenBaseUri: string | undefined;
 
   async function processUploadBundle() {
     validationErrors = [];
@@ -27,12 +31,17 @@
   }
 
   async function mintNfts() {
+    if (bundle === undefined) return;
     mintError = undefined;
     try {
-      await bundle?.mint();
+      minting = true;
+      const { address, baseUri } = await bundle.mint();
+      tokenAddress = address;
+      tokenBaseUri = baseUri;
     } catch (e: any) {
       mintError = e;
     }
+    minting = false;
   }
 </script>
 
@@ -101,10 +110,30 @@
           class="mt-2"
           type="submit"
           value={mintError ? 'Try Again' : 'Do it!'}
-          disabled={bundle !== undefined}
+          disabled={bundle === undefined || tokenAddress !== undefined || minting}
         />
         {#if mintError}
-          <span class="text-red-500 font-bold">Unable to mint: {mintError.message}.</span>.
+          <p class="text-red-500">Unable to mint: {mintError.message}.</p>
+          .
+        {/if}
+        {#if tokenAddress}
+          <p class="text-green-700">
+            Congratulations, your token has been minted. Here&apos;re the deets:
+          </p>
+          <ul>
+            <li>token address: <span class="font-mono">{tokenAddress}</span></li>
+            <li>
+              token metadata base uri:<br />
+              <a class="font-mono" href={tokenBaseUri}>{tokenBaseUri}</a>
+            </li>
+          </ul>
+          <p>
+            Now, go ask MetaMirror to list it on their gallery.
+            <br />
+            If you're doing a blind box launch, call the contract's
+            <span class="font-mono">setFinalBaseURI</span> with the base uri above.
+          </p>
+          <p class="text-green-700">Thank you for making a simple DApp very happy.</p>
         {/if}
       </form>
     {/if}

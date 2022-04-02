@@ -22,10 +22,14 @@ function nftStorageLink(cid: string): string {
 }
 
 export class Bundle {
+  private readonly progress: typeof store2;
+
   private constructor(
     public readonly manifest: Manifest,
     private readonly files: Map<string, File>,
-  ) {}
+  ) {
+    this.progress = store2.namespace(JSON.stringify([this.manifest.title, this.manifest.symbol]));
+  }
 
   public static async create(filesList: FileList): Promise<Bundle> {
     const files = new Map<string, File>();
@@ -87,6 +91,11 @@ export class Bundle {
   }
 
   public async mint(): Promise<{ address: string; baseUri: string }> {
+    const progressKey = 'result';
+    if (this.progress.get(progressKey)) {
+      return this.progress.get(progressKey);
+    }
+
     const parcel = get(parcelStore);
     if (!parcel) throw new Error('not connected to Parcel');
     const provider = get(ethProvider);
@@ -95,13 +104,16 @@ export class Bundle {
     const nftStorage = new NFTStorage({ token: NFT_STORAGE_TOKEN });
 
     function wrapErr(e: any, msg: string): Error {
+      console.error(e);
       throw Object.assign(new Error(`${msg}: ${e.message ?? e.toString()}`), { source: e });
     }
 
     // 1: Upload public images.
     let imagesUpload: ImagesUpload;
     try {
+      console.log('mint: uploading images');
       imagesUpload = await this.uploadPublicImages(nftStorage);
+      // This is already idempotent;
     } catch (e: any) {
       throw wrapErr(e, 'failed to upload public images');
     }
@@ -109,7 +121,9 @@ export class Bundle {
     // 2: Create the NFT contract.
     let nft: NFT;
     try {
+      console.log('mint: deploying contract');
       nft = await this.deployNFTContract(signer);
+      localStorage.k;
     } catch (e: any) {
       throw wrapErr(e, 'failed to create NFT');
     }
@@ -117,6 +131,7 @@ export class Bundle {
     // 3. Create parcel tokens.
     let parcelTokens: Token[];
     try {
+      console.log('mint: creating parcel tokens');
       parcelTokens = await this.createParcelTokens(parcel, nft);
     } catch (e: any) {
       throw wrapErr(e, 'failed to create Parcel tokens');
@@ -125,6 +140,7 @@ export class Bundle {
     // 4. Upload nft attributes.
     let metadatasCid: string;
     try {
+      console.log('mint: uploading token metadatas');
       metadatasCid = await this.uploadMetadatas(nftStorage, imagesUpload, parcelTokens);
     } catch (e: any) {
       throw wrapErr(e, 'failed to upload token metadatas');
@@ -132,22 +148,31 @@ export class Bundle {
 
     // 5. Upload and tokenize private data.
     try {
+      console.log('mint: uploading and tokenizing private data');
       await this.uploadAndTokenizePrivateData(parcel, parcelTokens);
     } catch (e: any) {
       throw wrapErr(e, 'failed to tokenize private data');
     }
 
-    return {
+    const result = {
       address: nft.address,
       baseUri: nftStorageLink(metadatasCid),
     };
+    this.progress.set(progressKey, result);
+    console.log('mint: done!');
+    return result;
   }
 
   private async deployNFTContract(signer: Signer): Promise<NFT> {
+    const progressKey = 'nftContract';
+    const createdContractAddr: string = this.progress.get(progressKey);
+    if (createdContractAddr) {
+      return NFTFactory.connect(createdContractAddr, signer);
+    }
     // TODO: revenue sharing
     const treasury = await signer.getAddress();
     const nftFactory = new NFTFactory(get(ethProvider).getSigner());
-    return await nftFactory.deploy(
+    const nftContract = await nftFactory.deploy(
       this.manifest.title,
       this.manifest.symbol,
       this.manifest.initialBaseUri ?? '',
@@ -156,9 +181,12 @@ export class Bundle {
       this.manifest.minting.mintPrice,
       treasury,
     );
+    this.progress.set(progressKey, nftContract.address);
+    return nftContract;
   }
 
   private async uploadPublicImages(nftStorage: NFTStorage): Promise<ImagesUpload> {
+    // This is idempotent, so there's no need to record progress.
     const filenames: string[] = [];
     const cid = await nftStorage.storeDirectory(
       this.manifest.nfts.map((descriptor, i) => {
@@ -177,10 +205,17 @@ export class Bundle {
   }
 
   private async createParcelTokens(parcel: Parcel, nft: NFT): Promise<Token[]> {
-    return Promise.all(
-      this.manifest.nfts.map((_, i) => {
+    const progressKey = 'parcelTokens';
+    const createdTokens: { [key: string]: TokenId } = this.progress.get(progressKey) ?? {};
+    const results = await Promise.allSettled(
+      this.manifest.nfts.map(async (_, i) => {
+        const name = `${this.manifest.title} #${i}`;
+        if (createdTokens[name]) {
+          console.log('skipping creating parcel token with name', `${name}`);
+          return parcel.getToken(createdTokens[name]);
+        }
         return parcel.mintToken({
-          name: `${this.manifest.title} #${i}`,
+          name,
           grant: {
             condition: null, // Allow full access.
           },
@@ -195,6 +230,17 @@ export class Bundle {
         });
       }),
     );
+    const tokens = [];
+    for (const result of results) {
+      if (result.status === 'rejected') {
+        throw new Error(result.reason);
+      }
+      const token = result.value;
+      createdTokens[token.name!] = token.id;
+      tokens.push(token);
+    }
+    this.progress.set(progressKey, createdTokens);
+    return tokens;
   }
 
   private async uploadMetadatas(
@@ -202,6 +248,7 @@ export class Bundle {
     { cid: imagesCid, filenames: imageFilenames }: ImagesUpload,
     parcelTokens: Token[],
   ): Promise<string> {
+    // This is idempotent, so there's no need to record progress.
     const metadatas: File[] = [];
     for (let i = 0; i < this.manifest.nfts.length; ++i) {
       const descriptor = this.manifest.nfts[i];
@@ -229,15 +276,38 @@ export class Bundle {
   }
 
   private async uploadAndTokenizePrivateData(parcel: Parcel, parcelTokens: Token[]): Promise<void> {
-    Promise.all(
+    const progressKey = 'tokenDocs';
+    const tokDocs: { [key: TokenId]: { id?: DocumentId; tokenized?: boolean } } =
+      this.progress.get(progressKey) ?? {};
+    const results = await Promise.allSettled(
       this.manifest.nfts.map(async (descriptor, i) => {
-        const doc = await parcel.uploadDocument(this.files.get(descriptor.privateData)!, {
-          owner: 'escrow',
-          toApp: undefined,
-        }).finished;
-        await parcelTokens[i].addAsset(doc.id);
+        const token = parcelTokens[i] ?? {};
+        if (tokDocs[token.id] === undefined) {
+          tokDocs[token.id] = {};
+        }
+        if (tokDocs[token.id].id === undefined) {
+          const doc = await parcel.uploadDocument(this.files.get(descriptor.privateData)!, {
+            owner: 'escrow',
+            toApp: undefined,
+          }).finished;
+          tokDocs[token.id].id = doc.id;
+        } else {
+          console.log(`skipping upload of token ${i}'s document`);
+        }
+        if (tokDocs[token.id].tokenized) {
+          console.log('skipping tokenization of documents in token', i);
+          return;
+        }
+        await parcelTokens[i].addAsset(tokDocs[token.id].id!);
+        tokDocs[token.id].tokenized = true;
       }),
     );
+    for (const result of results) {
+      if (result.status === 'rejected') {
+        throw new Error(`failed to tokenize document: ${result.reason}`);
+      }
+    }
+    this.progress.set(progressKey, tokDocs);
   }
 }
 

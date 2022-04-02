@@ -1,41 +1,42 @@
 import type { Writable } from 'svelte/store';
 import { get, writable } from 'svelte/store';
 
-import type { Identity, TokenProvider } from '@oasislabs/parcel';
+import type { Identity } from '@oasislabs/parcel';
 import Parcel from '@oasislabs/parcel';
 
 import { address as ethAddress, provider as ethProvider } from './eth';
 import { error } from './error';
 import { unwritable } from './utils';
 
-const parcelStore: Writable<Parcel> = writable(undefined, function start(set) {
+const parcelStore: Writable<Parcel | undefined> = writable(undefined, function start(set) {
   return ethAddress.subscribe(() => {
     set(undefined);
   });
 });
+export const parcel = unwritable(parcelStore);
 
-function makeParcel(ethAddr?: string): Parcel {
-  let tokenProvider: TokenProvider = '';
-  if (ethAddr) {
-    tokenProvider = {
-      principal: ethAddr,
-      scopes: ['parcel.safe'],
-      ethProviderUsingAccountIndex: 0,
-    };
-  }
+function makeParcel(ethAddr: string): Parcel {
+  const tokenProvider = {
+    principal: ethAddr,
+    scopes: ['parcel.safe'],
+    ethProviderUsingAccountIndex: 0,
+  };
   return new Parcel(tokenProvider, {
     apiUrl: 'http://localhost:4242/v1',
   });
 }
 
-const identityStore: Writable<Identity> = writable(undefined, function start(set) {
+const identityStore: Writable<Identity | undefined> = writable(undefined, function start(set) {
   return parcelStore.subscribe(async (parcel) => {
-    if (!parcel) return;
+    if (!parcel) {
+      set(undefined);
+      return;
+    }
     try {
       console.log('getting current identity');
       set(await parcel.getCurrentIdentity());
       return;
-    } catch (e) {
+    } catch (e: any) {
       if (e?.response?.status !== 404) {
         error.set('Failed to fetch Parcel identity. Please try again later.');
         console.error('failed to fetch Parcel identity', e);

@@ -13,7 +13,6 @@
     validationErrors = [];
     try {
       bundle = await Bundle.create(files);
-      bundle.validate();
     } catch (e) {
       if (e instanceof ValidationErrors) {
         validationErrors = e.validationErrors;
@@ -46,11 +45,13 @@
       <span>Emerald&nbsp;Testnet</span>.
     {:else if $ethNetwork?.chainId === 0xa516}
       <span>Emerald&nbsp;Mainnet</span>.
+    {:else if $ethNetwork?.chainId === 1337}
+      <span>Local&nbsp;Network</span>.
     {:else}
       <span class="text-red-500 font-bold">{$ethNetwork?.name ?? 'unknown'} network</span>.
     {/if}
   </p>
-  {#if $ethNetwork?.chainId === 0xa515 || $ethNetwork?.chainId === 0xa516}
+  {#if $ethNetwork?.chainId === 0xa515 || $ethNetwork?.chainId === 0xa516 || $ethNetwork?.chainId === 1337}
     {#if $parcelIdentity === undefined}
       <button class="block mx-auto" on:click={connectToParcel}>Connect to Parcel</button>
     {:else}

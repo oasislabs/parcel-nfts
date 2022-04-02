@@ -212,7 +212,7 @@ export class Bundle {
           console.log('skipping creating parcel token with name', `${name}`);
           return parcel.getToken(createdTokens[name]);
         }
-        return parcel.mintToken({
+        const token = await parcel.mintToken({
           name,
           grant: {
             condition: null, // Allow full access.
@@ -226,18 +226,18 @@ export class Bundle {
             },
           },
         });
+        createdTokens[name] = token.id;
+        return token;
       }),
     );
+    this.progress.set(progressKey, createdTokens);
     const tokens = [];
     for (const result of results) {
       if (result.status === 'rejected') {
         throw new Error(result.reason);
       }
-      const token = result.value;
-      createdTokens[token.name!] = token.id;
-      tokens.push(token);
+      tokens.push(result.value);
     }
-    this.progress.set(progressKey, createdTokens);
     return tokens;
   }
 
@@ -300,12 +300,12 @@ export class Bundle {
         tokDocs[token.id].tokenized = true;
       }),
     );
+    this.progress.set(progressKey, tokDocs);
     for (const result of results) {
       if (result.status === 'rejected') {
         throw new Error(`failed to tokenize document: ${result.reason}`);
       }
     }
-    this.progress.set(progressKey, tokDocs);
   }
 }
 

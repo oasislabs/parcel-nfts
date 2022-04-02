@@ -1,0 +1,21 @@
+pnpm-lock.yaml
+
+.DS_Store
+node_modules
+/build
+/.svelte-kit
+/package
+.env
+.env.*
+!.env.example
+
+
+# Emerald contracts
+.openzeppelin
+artifacts
+cache
+coverage
+coverage.json
+gasReporterOutput.json
+emerald/lib
+typechain-types

@@ -265,7 +265,7 @@ export class Bundle {
               2,
             ),
           ],
-          `${i}.json`,
+          `${i}`,
           { type: 'application/json' },
         ),
       );

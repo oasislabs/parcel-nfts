@@ -13,7 +13,7 @@
     validationErrors = [];
     try {
       bundle = await Bundle.create(files);
-    } catch (e) {
+    } catch (e: any) {
       if (e instanceof ValidationErrors) {
         validationErrors = e.validationErrors;
         return;
@@ -27,7 +27,12 @@
   }
 
   async function mintNfts() {
-    await bundle?.mint();
+    mintError = undefined;
+    try {
+      await bundle?.mint();
+    } catch (e: any) {
+      mintError = e;
+    }
   }
 </script>
 
@@ -91,10 +96,15 @@
         {#if bundle}
           <span class="text-green-700">Ready to create {bundle.manifest.nfts.length} tokens.</span>
           <br />
-          <input class="mt-2" type="submit" value="Do it!" />
-          {#if mintError}
-            <span class="text-red-500 font-bold">Unable to mint: {mintError.toString()}.</span>.
-          {/if}
+        {/if}
+        <input
+          class="mt-2"
+          type="submit"
+          value={mintError ? 'Try Again' : 'Do it!'}
+          disabled={bundle !== undefined}
+        />
+        {#if mintError}
+          <span class="text-red-500 font-bold">Unable to mint: {mintError.message}.</span>.
         {/if}
       </form>
     {/if}

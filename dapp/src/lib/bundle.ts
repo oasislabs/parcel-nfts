@@ -8,8 +8,8 @@ import { NFTStorage } from 'nft.storage';
 import store2 from 'store2';
 import { get } from 'svelte/store';
 
-import type { NFT } from '@oasislabs/parcel-nft-contracts';
-import { NFTFactory } from '@oasislabs/parcel-nft-contracts';
+import type { NFT } from '@oasislabs/parcel-nfts-contracts';
+import { NFTFactory } from '@oasislabs/parcel-nfts-contracts';
 
 import { provider as ethProvider } from '../stores/eth';
 import { parcel as parcelStore } from '../stores/parcel';

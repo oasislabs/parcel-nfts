@@ -1,7 +1,6 @@
 {
-  "private": true,
   "name": "@oasislabs/parcel-nfts-contracts",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "license": "MIT",
   "module": "lib/src/index.js",
   "types": "lib/src/index.d.ts",

@@ -3,6 +3,7 @@ pnpm-lock.yaml
 .DS_Store
 node_modules
 build
+lib
 .svelte-kit
 package
 .env
@@ -17,6 +18,5 @@ cache
 coverage
 coverage.json
 gasReporterOutput.json
-emerald/lib
 typechain-types
 abis

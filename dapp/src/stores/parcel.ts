@@ -46,7 +46,6 @@ const identityStore: Writable<Identity | undefined> = writable(undefined, functi
     // The identity does not exist, so create one.
     try {
       const signer = get(ethProvider).getSigner();
-      console.log('creating identity');
       set(
         await makeParcel().createIdentity({
           ethAddress: get(ethAddress),

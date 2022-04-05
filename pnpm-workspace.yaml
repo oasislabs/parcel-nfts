@@ -1,4 +1,5 @@
 packages:
   - dapp
   - emerald
+  - integration
   - '!**/test/**'

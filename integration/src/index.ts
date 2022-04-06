@@ -1,12 +1,13 @@
 import type { Signer } from '@ethersproject/abstract-signer';
 import type {
+  Config as ParcelConfig,
   DocumentId,
   EscrowedAsset,
   Identity,
-  Parcel,
   Token,
   TokenId,
 } from '@oasislabs/parcel';
+import Parcel from '@oasislabs/parcel';
 import { EmeraldBridgeAdapterV1 } from '@oasislabs/parcel-evm-contracts';
 import { NFTFactory } from '@oasislabs/parcel-nfts-contracts';
 import { saveAs } from 'file-saver';
@@ -15,6 +16,13 @@ export interface Options {
   bridgeAdapterV1Addr: string;
 }
 
+/**
+ * Downloads tokenized data from Parcel.
+ * @param parcel the Parcel instance, perhaps created by calling `makeParcel`.
+ * @param ethSigner the `ethers.Signer` that was used to call `makeParcel` (or has been linked to a pre-existing Parcel identity)
+ * @param nftContractAddr the address of the NFT contract bridgable to Parcel.
+ * @param nftTokenId the index of the item for which to download data.
+ */
 export async function downloadTokenizedData(
   parcel: Parcel,
   ethSigner: Signer,
@@ -115,6 +123,18 @@ export async function downloadTokenizedData(
   }
 
   await unlockToken();
+}
+
+/** Creates a new Parcel instance provided an `ethers.Signer` or else the MetaMask account index. */
+export async function makeParcel(signer: Signer, config?: ParcelConfig): Promise<Parcel> {
+  return new Parcel(
+    {
+      principal: await signer.getAddress(),
+      signMessage: signer.signMessage,
+      scopes: ['parcel.safe'],
+    },
+    config,
+  );
 }
 
 async function getOrCreateParcelIdentity(parcel: Parcel, ethSigner: Signer): Promise<Identity> {

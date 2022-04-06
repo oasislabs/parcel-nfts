@@ -46,7 +46,7 @@ importers:
       '@oasislabs/parcel': link:../../parcel2/gateway/clients/typescript
       '@oasislabs/parcel-nfts-contracts': link:../emerald
       '@sveltejs/adapter-static': 1.0.0-next.29
-      '@sveltejs/kit': 1.0.0-next.306_svelte@3.46.6
+      '@sveltejs/kit': 1.0.0-next.307_svelte@3.46.6
       ajv: 8.11.0
       ajv-formats: 2.1.1
       autoprefixer: 10.4.4_postcss@8.4.12
@@ -1013,8 +1013,8 @@ packages:
       tiny-glob: 0.2.9
     dev: true
 
-  /@sveltejs/kit/1.0.0-next.306_svelte@3.46.6:
-    resolution: {integrity: sha512-dLHoGTr4uwdHuI318O0jLDLOHaLsR2tZHQJLmf1+29H3tL79Kch4B4XCichJ0yIQFrnNATjNBYttM19POW4pyA==}
+  /@sveltejs/kit/1.0.0-next.307_svelte@3.46.6:
+    resolution: {integrity: sha512-dVxSuP0YyGL6/4VVhjLxxj4hHlVscrXJttvsffGnFOUJ1JtrJ496xoxhxB7iSVpYdTMXocjA9w54ZIC59m0J7A==}
     engines: {node: '>=14.13'}
     hasBin: true
     peerDependencies:

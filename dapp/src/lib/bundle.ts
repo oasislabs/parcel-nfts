@@ -6,13 +6,9 @@ import addFormats from 'ajv-formats';
 import type { Signer } from 'ethers';
 import { NFTStorage } from 'nft.storage';
 import store2 from 'store2';
-import { get } from 'svelte/store';
 
 import type { NFT } from '@oasislabs/parcel-nfts-contracts';
 import { NFTFactory } from '@oasislabs/parcel-nfts-contracts';
-
-import { provider as ethProvider } from '../stores/eth';
-import { parcel as parcelStore } from '../stores/parcel';
 
 const NFT_STORAGE_TOKEN =
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkaWQ6ZXRocjoweDM5NDAxMWUwNUI1ODU5RmFlNDIxQTk1ZjI3ODdFMDg4Nzg5OGJGNEUiLCJpc3MiOiJuZnQtc3RvcmFnZSIsImlhdCI6MTYzNTIyNzM1MjcyNSwibmFtZSI6InRlc3QifQ.xY5yiRm0aw5wWeRK3dMHWDTV6T0C55fSdEH9nJUOxN0';
@@ -90,17 +86,12 @@ export class Bundle {
     return new Bundle(manifest, files);
   }
 
-  public async mint(): Promise<{ address: string; baseUri: string }> {
+  public async mint(parcel: Parcel, signer: Signer): Promise<{ address: string; baseUri: string }> {
     const progressKey = 'result';
     if (this.progress.get(progressKey)) {
       return this.progress.get(progressKey);
     }
 
-    const parcel = get(parcelStore);
-    if (!parcel) throw new Error('not connected to Parcel');
-    const provider = get(ethProvider);
-    if (!provider) throw new Error('Eth provider not connected');
-    const signer = provider.getSigner();
     const nftStorage = new NFTStorage({ token: NFT_STORAGE_TOKEN });
 
     function wrapErr(e: any, msg: string): Error {
@@ -169,15 +160,17 @@ export class Bundle {
     }
     // TODO: revenue sharing
     const treasury = await signer.getAddress();
-    const nftFactory = new NFTFactory(get(ethProvider).getSigner());
+    const nftFactory = new NFTFactory(signer);
     const nftContract = await nftFactory.deploy(
       this.manifest.title,
       this.manifest.symbol,
-      this.manifest.initialBaseUri ?? '',
-      this.manifest.minting.maxQuantity,
-      this.manifest.minting.premintPrice,
-      this.manifest.minting.mintPrice,
       treasury,
+      this.manifest.initialBaseUri ?? '',
+      this.manifest.nfts.length,
+      this.manifest.minting.premintPrice,
+      this.manifest.minting.maxPremintCount,
+      this.manifest.minting.mintPrice,
+      this.manifest.minting.maxMintCount,
     );
     this.progress.set(progressKey, nftContract.address);
     return nftContract;
@@ -332,11 +325,14 @@ interface Manifest {
 }
 
 interface MintingOptions {
-  /** The maximum number of tokens mintable by an individual account. */
-  maxQuantity: number;
+  /** The amount of items a member of the premint list can mint. */
+  maxPremintCount: number;
 
-  /** The quantity of ROSE paid for one token by premint-listed accounts. */
+  /** The amount of ROSE paid for one token by premint-listed accounts. */
   premintPrice: number;
+
+  /** The maximum number of tokens mintable by an individual account. */
+  maxMintCount: number;
 
   /** The quantity of ROSE paid for one token by the general public. */
   mintPrice: number;
@@ -377,11 +373,14 @@ export const DOCUMENTATION = `interface Manifest {
 }
 
 interface MintingOptions {
-  /** The maximum number of tokens mintable by an individual account. */
-  maxQuantity: number;
+  /** The amount of items a member of the premint list can mint. */
+  maxPremintCount: number;
 
-  /** The quantity of ROSE paid for one token by premint-listed accounts. */
+  /** The amount of ROSE paid for one token by premint-listed accounts. */
   premintPrice: number;
+
+  /** The maximum number of tokens mintable by an individual account. */
+  maxMintCount: number;
 
   /** The quantity of ROSE paid for one token by the general public. */
   mintPrice: number;
@@ -420,11 +419,12 @@ const NFT_DESCRIPTOR_SCHEMA: JSONSchemaType<NftDescriptor> = {
 const MINTING_OPTIONS_SCHEMA: JSONSchemaType<MintingOptions> = {
   type: 'object',
   properties: {
-    maxQuantity: { type: 'integer', minimum: 0 },
     premintPrice: { type: 'integer', minimum: 0 },
+    maxPremintCount: { type: 'integer', minimum: 0 },
     mintPrice: { type: 'integer', minimum: 0 },
+    maxMintCount: { type: 'integer', minimum: 0 },
   },
-  required: ['maxQuantity', 'premintPrice', 'mintPrice'],
+  required: ['premintPrice', 'maxPremintCount', 'mintPrice', 'maxMintCount'],
   additionalProperties: false,
 };
 

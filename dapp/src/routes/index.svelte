@@ -1,8 +1,18 @@
 <script lang="ts">
+  import { get } from 'svelte/store';
+
   import { DOCUMENTATION as BUNDLE_TYPES, Bundle, ValidationErrors } from '../lib/bundle';
   import { error } from '../stores/error';
-  import { address as ethAddress, network as ethNetwork } from '../stores/eth';
-  import { identity as parcelIdentity, connect as connectToParcel } from '../stores/parcel';
+  import {
+    provider as ethProvider,
+    address as ethAddress,
+    network as ethNetwork,
+  } from '../stores/eth';
+  import {
+    parcel as parcelStore,
+    identity as parcelIdentity,
+    connect as connectToParcel,
+  } from '../stores/parcel';
 
   let files: FileList;
   let bundle: Bundle | undefined = undefined;
@@ -31,11 +41,13 @@
   }
 
   async function mintNfts() {
-    if (bundle === undefined) return;
+    const parcel = get(parcelStore);
+    const signer = get(ethProvider)?.getSigner();
+    if (!bundle || !parcel || !signer) return;
     mintError = undefined;
     try {
       minting = true;
-      const { address, baseUri } = await bundle.mint();
+      const { address, baseUri } = await bundle.mint(parcel, signer);
       tokenAddress = address;
       tokenBaseUri = baseUri;
     } catch (e: any) {
@@ -52,8 +64,7 @@
 {#if $ethAddress && $ethNetwork}
   <p class="text-center">
     Connected to
-    <span class="font-mono">{`${$ethAddress.substr(0, 7)}…${$ethAddress.substr(-5, 5)}`}</span><br
-    />
+    <span class="font-mono">{`${$ethAddress.slice(0, 7)}…${$ethAddress.slice(-5)}`}</span><br />
     on the
     {#if $ethNetwork?.chainId === 0xa515}
       <span>Emerald&nbsp;Testnet</span>.

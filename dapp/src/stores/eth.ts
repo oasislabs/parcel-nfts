@@ -5,41 +5,47 @@ import { ethers } from 'ethers';
 
 import { unwritable } from './utils';
 
-const providerStore: Writable<ethers.providers.Web3Provider> = writable(
+const providerStore: Writable<ethers.providers.Web3Provider | undefined> = writable(
   undefined,
-  function start(set) {
+  function start(set: (provider?: ethers.providers.Web3Provider) => void) {
     set(makeProvider());
   },
 );
 export const provider = unwritable(providerStore);
 
-const networkStore: Writable<ethers.providers.Network> = writable(undefined, function start(set) {
-  return providerStore.subscribe(async (provider) => {
-    if (!provider) return;
-    set(await provider.getNetwork());
-    const eth = getEth();
-    if (isMetaMask(eth)) {
-      eth.on('chainChanged', async () => {
-        window.location.reload(); // Per MetaMask's recommendation.
-      });
-    }
-  });
-});
+const networkStore: Writable<ethers.providers.Network | undefined> = writable(
+  undefined,
+  function start(set: (provider?: ethers.providers.Network) => void) {
+    return providerStore.subscribe(async (provider) => {
+      if (!provider) return;
+      set(await provider.getNetwork());
+      const eth = getEth();
+      if (isMetaMask(eth)) {
+        eth.on('chainChanged', async () => {
+          window.location.reload(); // Per MetaMask's recommendation.
+        });
+      }
+    });
+  },
+);
 export const network = unwritable(networkStore);
 
-const addressStore: Writable<string> = writable(undefined, function start(set) {
-  return providerStore.subscribe(async (provider) => {
-    if (!provider) return;
-    const accounts = await provider.send('eth_requestAccounts', []);
-    set(accounts[0]);
-    const eth = getEth();
-    if (isMetaMask(eth)) {
-      eth.on('accountsChanged', async (addresses: string[]) => {
-        set(addresses[0]);
-      });
-    }
-  });
-});
+const addressStore: Writable<string | undefined> = writable(
+  undefined,
+  function start(set: (address: string | undefined) => void) {
+    return providerStore.subscribe(async (provider) => {
+      if (!provider) return;
+      const accounts = await provider.send('eth_requestAccounts', []);
+      set(accounts[0]);
+      const eth = getEth();
+      if (isMetaMask(eth)) {
+        eth.on('accountsChanged', async (addresses: string[]) => {
+          set(addresses[0]);
+        });
+      }
+    });
+  },
+);
 export const address = unwritable(addressStore);
 
 function makeProvider(): ethers.providers.Web3Provider | undefined {
@@ -58,7 +64,7 @@ function isMetaMask(eth: any): eth is MetaMask {
 
 interface MetaMask extends ethers.providers.ExternalProvider {
   isMetamask?: boolean;
-  on?: (event: MetaMaskEvents, callback: (...args: any[]) => void) => void;
+  on: (event: MetaMaskEvents, callback: (...args: any[]) => void) => void;
 }
 
 type MetaMaskEvents = 'connect' | 'disconnect' | 'accountsChanged' | 'chainChanged';

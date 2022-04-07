@@ -3,7 +3,6 @@
 .DS_Store
 node_modules
 build
-lib
 .svelte-kit
 package
 .env
@@ -19,3 +18,7 @@ coverage
 coverage.json
 gasReporterOutput.json
 typechain-types
+emerald/lib
+
+# Integration
+integration/lib

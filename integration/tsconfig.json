@@ -1,13 +1,14 @@
 {
+  "include": ["src"],
   "compilerOptions": {
     "declaration": true,
     "esModuleInterop": true,
     "module": "es2020",
     "moduleResolution": "node",
-    "outDir": "lib/",
+    "outDir": "lib",
+    "skipLibCheck": true,
     "sourceMap": true,
     "strict": true,
     "target": "es2020"
-  },
-  "include": ["./src", "./tests"]
+  }
 }

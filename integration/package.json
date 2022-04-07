@@ -3,11 +3,13 @@
   "type": "module",
   "version": "0.1.0",
   "description": "Code for NFT marketplaces to integrate Parcel NFTs.",
-  "main": "lib/src/index.js",
-  "module": "lib/src/index.js",
-  "types": "lib/src/index.d.ts",
+  "main": "lib/index.js",
+  "module": "lib/index.js",
+  "types": "lib/index.d.ts",
   "scripts": {
-    "build": "tsc -b"
+    "build": "tsc -b",
+    "test": "ava",
+    "prepublishOnly": "pnpm build"
   },
   "license": "MIT",
   "dependencies": {
@@ -18,6 +20,23 @@
     "file-saver": "^2.0.5"
   },
   "devDependencies": {
-    "@types/file-saver": "^2.0.5"
+    "@ava/typescript": "^3.0.1",
+    "@types/file-saver": "^2.0.5",
+    "@types/node": "^16.11.14",
+    "ava": "^4.1.0",
+    "node-fetch": "^3.2.3",
+    "ts-node": "^10.7.0",
+    "typescript": "^4.6.3"
+  },
+  "ava": {
+    "files": [
+      "test/**/*.spec.ts"
+    ],
+    "extensions": {
+      "ts": "module"
+    },
+    "nodeArguments": [
+      "--loader=ts-node/esm"
+    ]
   }
 }

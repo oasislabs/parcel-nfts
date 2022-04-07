@@ -2,6 +2,7 @@
   "name": "@oasislabs/parcel-nfts-contracts",
   "version": "1.0.0",
   "license": "MIT",
+  "main": "lib/src/index.js",
   "module": "lib/src/index.js",
   "types": "lib/src/index.d.ts",
   "scripts": {

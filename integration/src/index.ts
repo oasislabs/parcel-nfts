@@ -10,11 +10,6 @@ import type {
 import Parcel from '@oasislabs/parcel';
 import { EmeraldBridgeAdapterV1 } from '@oasislabs/parcel-evm-contracts';
 import { NFTFactory } from '@oasislabs/parcel-nfts-contracts';
-import { saveAs } from 'file-saver';
-
-export interface Options {
-  bridgeAdapterV1Addr: string;
-}
 
 /**
  * Downloads tokenized data from Parcel.
@@ -29,16 +24,26 @@ export async function downloadTokenizedData(
   nftContractAddr: string,
   nftTokenId: number,
   parcelTokenId: TokenId,
-  options?: {
+  options?: Partial<{
     bridgeTimeoutSeconds: number;
-  },
+    /** Blob polyfill, if needed. */
+    Blob: typeof Blob;
+    /** Alternative download function used in tests. */
+    saveFile: (data: string | Blob, filename?: string) => void;
+    /** The Parcel bridge adapter address used in tests. */
+    bridgeAdapterAddress: string;
+  }>,
 ): Promise<void> {
   const signerAddr = await ethSigner.getAddress();
 
   const nft = NFTFactory.connect(nftContractAddr, ethSigner);
-  const bridgeAdapter = await EmeraldBridgeAdapterV1.connect(ethSigner);
+  const bridgeAdapter = await EmeraldBridgeAdapterV1.connect(
+    ethSigner,
+    options?.bridgeAdapterAddress,
+  );
 
   const unlockToken = async () => {
+    console.log('downloadTokenizedData:', 'unlocking token');
     try {
       await bridgeAdapter.unlockERC721(signerAddr, nft.address, nftTokenId, []);
     } catch (e: any) {
@@ -48,6 +53,7 @@ export async function downloadTokenizedData(
 
   // Lock token into Parcel bridge adapter to recieve on Parcel (if not already).
   if ((await nft.callStatic.ownerOf(nftTokenId)) !== bridgeAdapter.address) {
+    console.log('downloadTokenizedData: locking NFT into Parcel bridge adapter');
     await nft['safeTransferFrom(address,address,uint256)'](
       signerAddr,
       bridgeAdapter.address,
@@ -94,6 +100,7 @@ export async function downloadTokenizedData(
   }
 
   // Wait until the Parcel identity has received the Parcel token.
+  console.log('downloadTokenizedData: waiting for Parcel to receive bridged token');
   waitForToken: try {
     for (
       let elapsedTime = 0;
@@ -110,13 +117,15 @@ export async function downloadTokenizedData(
   }
 
   // Download the asset.
+  console.log('downloadTokenizedData: downloading data asset');
   try {
     const docId = tokenAssets[0].id as DocumentId;
     const dataChunks = [];
     for await (const chunk of parcel.downloadDocument(docId)) {
       dataChunks.push(chunk);
     }
-    const data = new Blob(dataChunks);
+    const data = new (options?.Blob ?? Blob)(dataChunks);
+    const saveAs = options?.saveFile ?? (await import('file-saver')).saveAs;
     saveAs(data, parcelToken.name);
   } catch (e: any) {
     throw wrapErr(e, 'failed to download private asset');
@@ -130,8 +139,8 @@ export async function makeParcel(signer: Signer, config?: ParcelConfig): Promise
   return new Parcel(
     {
       principal: await signer.getAddress(),
-      signMessage: signer.signMessage,
-      scopes: ['parcel.safe'],
+      signMessage: signer.signMessage.bind(signer),
+      scopes: ['parcel.full'],
     },
     config,
   );
@@ -139,19 +148,20 @@ export async function makeParcel(signer: Signer, config?: ParcelConfig): Promise
 
 async function getOrCreateParcelIdentity(parcel: Parcel, ethSigner: Signer): Promise<Identity> {
   try {
-    return parcel.getCurrentIdentity();
+    return await parcel.getCurrentIdentity();
   } catch (e: any) {
     if (e?.response?.status !== 404) {
       throw wrapErr(e, 'failed to fetch Parcel identity');
     }
   }
+  console.log('creating parcel identity');
   // The identity does not exist, so create one.
   try {
     const [ethAddress, proof] = await Promise.all([
       ethSigner.getAddress(),
       ethSigner.signMessage('parcel.createIdentity'),
     ]);
-    return parcel.createIdentity({
+    return await parcel.createIdentity({
       ethAddress,
       proof,
     });

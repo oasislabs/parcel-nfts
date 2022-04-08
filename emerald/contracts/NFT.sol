@@ -80,27 +80,51 @@ contract NFT is ERC721A, Ownable {
         _safeMint(msg.sender, _count);
     }
 
-    function mintTo(address whom, uint256 _count) external onlyOwner {
-        _safeMint(whom, _count);
-    }
+    function mintTo(address[] calldata _recipients, uint256[] calldata _counts)
+        external
+        onlyOwner
+    {
+        require(_recipients.length == _counts.length, "mismatched lengths");
 
-    function grantPremint(address[] calldata addresses) external onlyOwner {
-        require(!hasBegunPublicSale, "public sale has already begun");
-        for (uint256 i; i < addresses.length; ++i) {
-            (, uint256 premintedCount) = getPremintCounts(addresses[i]);
-            // Set the number of premint slots available to the maximum number of slots.
-            // Premint grantees will not be able to mint past the max even if granted twice.
-            setPremintCounts(addresses[i], maxPremintCount, premintedCount);
+        uint256 totalCount;
+        for (uint256 i; i < _counts.length; ++i) {
+            totalCount += _counts[i];
+        }
+        if (totalCount == 0) return;
+        require(
+            _totalMinted() + totalCount < collectionSize,
+            "insufficient remaining items"
+        );
+
+        // Mint to owner and then transfer to avoid modifying `_numberMinted`,
+        // which would affect minting eligibility.
+        uint256 tokenIx = _currentIndex;
+        _safeMint(owner(), totalCount);
+        for (uint256 i; i < _recipients.length; ++i) {
+            for (uint256 j; j < _counts[i]; ++j) {
+                safeTransferFrom(owner(), _recipients[i], tokenIx + j);
+            }
+            tokenIx += _counts[i];
         }
     }
 
-    function revokePremint(address[] calldata addresses) external onlyOwner {
+    function grantPremint(address[] calldata _addresses) external onlyOwner {
         require(!hasBegunPublicSale, "public sale has already begun");
-        for (uint256 i; i < addresses.length; ++i) {
-            (, uint256 premintedCount) = getPremintCounts(addresses[i]);
+        for (uint256 i; i < _addresses.length; ++i) {
+            (, uint256 premintedCount) = getPremintCounts(_addresses[i]);
+            // Set the number of premint slots available to the maximum number of slots.
+            // Premint grantees will not be able to mint past the max even if granted twice.
+            setPremintCounts(_addresses[i], maxPremintCount, premintedCount);
+        }
+    }
+
+    function revokePremint(address[] calldata _addresses) external onlyOwner {
+        require(!hasBegunPublicSale, "public sale has already begun");
+        for (uint256 i; i < _addresses.length; ++i) {
+            (, uint256 premintedCount) = getPremintCounts(_addresses[i]);
             // Set the slot count to the preminted count to grant no further premints
             // while maintaining a useful invariant that `preminted <= slots`.
-            setPremintCounts(addresses[i], premintedCount, premintedCount);
+            setPremintCounts(_addresses[i], premintedCount, premintedCount);
         }
     }
 

@@ -14,7 +14,7 @@
     "format": "prettier --write --plugin-search-dir=. ."
   },
   "devDependencies": {
-    "@oasislabs/parcel": "link:/Users/nhynes/Projects/parcel/parcel2/gateway/clients/typescript",
+    "@oasislabs/parcel": "1.0.0-beta.21",
     "@oasislabs/parcel-nfts-contracts": "workspace:../emerald",
     "@sveltejs/adapter-static": "^1.0.0-next.29",
     "@sveltejs/kit": "next",

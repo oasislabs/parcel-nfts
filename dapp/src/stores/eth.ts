@@ -1,21 +1,21 @@
+import type { ExternalProvider, Network } from '@ethersproject/providers';
+import { Web3Provider } from '@ethersproject/providers';
 import type { Writable } from 'svelte/store';
 import { writable } from 'svelte/store';
 
-import { ethers } from 'ethers';
-
 import { unwritable } from './utils';
 
-const providerStore: Writable<ethers.providers.Web3Provider | undefined> = writable(
+const providerStore: Writable<Web3Provider | undefined> = writable(
   undefined,
-  function start(set: (provider?: ethers.providers.Web3Provider) => void) {
+  function start(set: (provider?: Web3Provider) => void) {
     set(makeProvider());
   },
 );
 export const provider = unwritable(providerStore);
 
-const networkStore: Writable<ethers.providers.Network | undefined> = writable(
+const networkStore: Writable<Network | undefined> = writable(
   undefined,
-  function start(set: (provider?: ethers.providers.Network) => void) {
+  function start(set: (provider?: Network) => void) {
     return providerStore.subscribe(async (provider) => {
       if (!provider) return;
       set(await provider.getNetwork());
@@ -48,12 +48,12 @@ const addressStore: Writable<string | undefined> = writable(
 );
 export const address = unwritable(addressStore);
 
-function makeProvider(): ethers.providers.Web3Provider | undefined {
+function makeProvider(): Web3Provider | undefined {
   const eth = getEth();
-  return eth ? new ethers.providers.Web3Provider(eth) : undefined;
+  return eth ? new Web3Provider(eth) : undefined;
 }
 
-function getEth(): ethers.providers.ExternalProvider | undefined {
+function getEth(): ExternalProvider | undefined {
   const g = globalThis as any;
   return g.ethereum;
 }
@@ -62,7 +62,7 @@ function isMetaMask(eth: any): eth is MetaMask {
   return eth?.isMetaMask;
 }
 
-interface MetaMask extends ethers.providers.ExternalProvider {
+interface MetaMask extends ExternalProvider {
   isMetamask?: boolean;
   on: (event: MetaMaskEvents, callback: (...args: any[]) => void) => void;
 }

@@ -8,6 +8,9 @@ const config = {
   preprocess: preprocess(),
 
   kit: {
+    prerender: {
+      default: true,
+    },
     adapter: adapter(),
     vite: {
       optimizeDeps: {
@@ -16,6 +19,11 @@ const config = {
       server: {
         fs: {
           allow: ['./emerald/lib'],
+        },
+      },
+      build: {
+        rollupOptions: {
+          external: ['node-fetch'],
         },
       },
     },

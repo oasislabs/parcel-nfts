@@ -1,14 +1,13 @@
+import type { Signer } from '@ethersproject/abstract-signer';
 import type Parcel from '@oasislabs/parcel';
 import type { DocumentId, Token, TokenId } from '@oasislabs/parcel';
 import type { JSONSchemaType } from 'ajv';
 import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
-import type { Signer } from 'ethers';
 import { NFTStorage } from 'nft.storage';
 import store2 from 'store2';
 
 import type { NFT } from '@oasislabs/parcel-nfts-contracts';
-import { NFTFactory } from '@oasislabs/parcel-nfts-contracts';
 
 const NFT_STORAGE_TOKEN =
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkaWQ6ZXRocjoweDM5NDAxMWUwNUI1ODU5RmFlNDIxQTk1ZjI3ODdFMDg4Nzg5OGJGNEUiLCJpc3MiOiJuZnQtc3RvcmFnZSIsImlhdCI6MTYzNTIyNzM1MjcyNSwibmFtZSI6InRlc3QifQ.xY5yiRm0aw5wWeRK3dMHWDTV6T0C55fSdEH9nJUOxN0';
@@ -153,6 +152,7 @@ export class Bundle {
   }
 
   private async deployNFTContract(signer: Signer): Promise<NFT> {
+    const { NFTFactory } = await import('@oasislabs/parcel-nfts-contracts');
     const progressKey = 'nftContract';
     const createdContractAddr: string = this.progress.get(progressKey);
     if (createdContractAddr) {

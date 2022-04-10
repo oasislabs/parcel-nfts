@@ -4,17 +4,17 @@ import type { DocumentId, Token, TokenId } from '@oasislabs/parcel';
 import type { JSONSchemaType } from 'ajv';
 import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
-import { NFTStorage } from 'nft.storage';
 import store2 from 'store2';
 
 import type { NFT } from '@oasislabs/parcel-nfts-contracts';
 
-const NFT_STORAGE_TOKEN =
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkaWQ6ZXRocjoweDM5NDAxMWUwNUI1ODU5RmFlNDIxQTk1ZjI3ODdFMDg4Nzg5OGJGNEUiLCJpc3MiOiJuZnQtc3RvcmFnZSIsImlhdCI6MTYzNTIyNzM1MjcyNSwibmFtZSI6InRlc3QifQ.xY5yiRm0aw5wWeRK3dMHWDTV6T0C55fSdEH9nJUOxN0';
+import { wrapErr } from './utils';
 
 function nftStorageLink(cid: string): string {
   return 'https://nftstorage.link/ipfs/' + cid;
 }
+
+type DirectoryStorer = (files: File[]) => Promise<string>;
 
 export class Bundle {
   private readonly progress: typeof store2;
@@ -50,7 +50,7 @@ export class Bundle {
     const validate = ajv.compile(MANIFEST_SCHEMA);
     if (!validate(manifest)) {
       throw new ValidationErrors(
-        validate.errors!.map((e) => {
+        validate.errors!.map((e: any) => {
           let target;
           if (e.instancePath === '') {
             target = 'manifest';
@@ -85,24 +85,21 @@ export class Bundle {
     return new Bundle(manifest, files);
   }
 
-  public async mint(parcel: Parcel, signer: Signer): Promise<{ address: string; baseUri: string }> {
+  public async mint(
+    parcel: Parcel,
+    signer: Signer,
+    storeDirectory: DirectoryStorer,
+  ): Promise<{ address: string; baseUri: string }> {
     const progressKey = 'result';
     if (this.progress.get(progressKey)) {
       return this.progress.get(progressKey);
-    }
-
-    const nftStorage = new NFTStorage({ token: NFT_STORAGE_TOKEN });
-
-    function wrapErr(e: any, msg: string): Error {
-      console.error(e);
-      throw Object.assign(new Error(`${msg}: ${e.message ?? e.toString()}`), { source: e });
     }
 
     // 1: Upload public images.
     let imagesUpload: ImagesUpload;
     try {
       console.log('mint: uploading images');
-      imagesUpload = await this.uploadPublicImages(nftStorage);
+      imagesUpload = await this.uploadPublicImages(storeDirectory);
     } catch (e: any) {
       throw wrapErr(e, 'failed to upload public images');
     }
@@ -129,7 +126,7 @@ export class Bundle {
     let metadatasCid: string;
     try {
       console.log('mint: uploading token metadatas');
-      metadatasCid = await this.uploadMetadatas(nftStorage, imagesUpload, parcelTokens);
+      metadatasCid = await this.uploadMetadatas(storeDirectory, imagesUpload, parcelTokens);
     } catch (e: any) {
       throw wrapErr(e, 'failed to upload token metadatas');
     }
@@ -176,10 +173,10 @@ export class Bundle {
     return nftContract;
   }
 
-  private async uploadPublicImages(nftStorage: NFTStorage): Promise<ImagesUpload> {
+  private async uploadPublicImages(storeDirectory: DirectoryStorer): Promise<ImagesUpload> {
     // This is idempotent, so there's no need to record progress.
     const filenames: string[] = [];
-    const cid = await nftStorage.storeDirectory(
+    const cid = await storeDirectory(
       this.manifest.nfts.map((descriptor, i) => {
         const file = this.files.get(descriptor.publicImage)!;
         const fileNameComps = file.name.split('.');
@@ -235,7 +232,7 @@ export class Bundle {
   }
 
   private async uploadMetadatas(
-    nftStorage: NFTStorage,
+    storeDirectory: DirectoryStorer,
     { cid: imagesCid, filenames: imageFilenames }: ImagesUpload,
     parcelTokens: Token[],
   ): Promise<string> {
@@ -263,7 +260,7 @@ export class Bundle {
         ),
       );
     }
-    return nftStorage.storeDirectory(metadatas);
+    return storeDirectory(metadatas);
   }
 
   private async uploadAndTokenizePrivateData(parcel: Parcel, parcelTokens: Token[]): Promise<void> {

@@ -1,7 +1,10 @@
 <script lang="ts">
   import { get } from 'svelte/store';
 
-  import { DOCUMENTATION as BUNDLE_TYPES, Bundle, ValidationErrors } from '../lib/bundle';
+  import { NFTStorage } from 'nft.storage';
+
+  import { Bundle, MANIFEST_TYPE_DOCS, ValidationErrors } from '@oasislabs/parcel-nfts';
+
   import { error } from '../stores/error';
   import {
     provider as ethProvider,
@@ -43,11 +46,19 @@
   async function mintNfts() {
     const parcel = get(parcelStore);
     const signer = get(ethProvider)?.getSigner();
+    const nftStorage = new NFTStorage({
+      token:
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkaWQ6ZXRocjoweDM5NDAxMWUwNUI1ODU5RmFlNDIxQTk1ZjI3ODdFMDg4Nzg5OGJGNEUiLCJpc3MiOiJuZnQtc3RvcmFnZSIsImlhdCI6MTYzNTIyNzM1MjcyNSwibmFtZSI6InRlc3QifQ.xY5yiRm0aw5wWeRK3dMHWDTV6T0C55fSdEH9nJUOxN0',
+    });
     if (!bundle || !parcel || !signer) return;
     mintError = undefined;
     try {
       minting = true;
-      const { address, baseUri } = await bundle.mint(parcel, signer);
+      const { address, baseUri } = await bundle.mint(
+        parcel,
+        signer,
+        nftStorage.storeDirectory.bind(nftStorage),
+      );
       tokenAddress = address;
       tokenBaseUri = baseUri;
     } catch (e: any) {
@@ -90,7 +101,7 @@
               <span class="font-mono text-sm">manifest.json</span> - a JSON file describing the
               remaining inputs that has schema:
               <pre
-                class="my-2 border-0 border-l-4 border-gray-400 border-solid px-2 py-0">{BUNDLE_TYPES}</pre>
+                class="my-2 border-0 border-l-4 border-gray-400 border-solid px-2 py-0">{MANIFEST_TYPE_DOCS}</pre>
             </li>
             <li>all of the public images listed in the manifest</li>
             <li>all of the private data listed in the manifest</li>

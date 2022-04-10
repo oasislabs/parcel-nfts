@@ -17,7 +17,11 @@
     "@oasislabs/parcel": "1.0.0-beta.21",
     "@oasislabs/parcel-evm-contracts": "^2.0.0",
     "@oasislabs/parcel-nfts-contracts": "workspace:../emerald",
-    "file-saver": "^2.0.5"
+    "ajv": "^8.11.0",
+    "ajv-formats": "^2.1.1",
+    "file-saver": "^2.0.5",
+    "nft.storage": "^6.1.0",
+    "store2": "^2.13.2"
   },
   "devDependencies": {
     "@ava/typescript": "^3.0.1",

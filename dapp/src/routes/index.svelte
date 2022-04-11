@@ -101,7 +101,7 @@
               <span class="font-mono text-sm">manifest.json</span> - a JSON file describing the
               remaining inputs that has schema:
               <pre
-                class="my-2 border-0 border-l-4 border-gray-400 border-solid px-2 py-0">{MANIFEST_TYPE_DOCS}</pre>
+                class="my-2 border-0 border-l-4 border-gray-400 border-solid px-2 py-0"><code>{MANIFEST_TYPE_DOCS}</code></pre>
             </li>
             <li>all of the public images listed in the manifest</li>
             <li>all of the private data listed in the manifest</li>

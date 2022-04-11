@@ -16,11 +16,7 @@ const config = {
       optimizeDeps: {
         exclude: ['jsrsasign', 'node-fetch'],
       },
-      server: {
-        fs: {
-          allow: ['../emerald/lib', '../integration/lib'],
-        },
-      },
+      ssr: false,
       build: {
         rollupOptions: {
           external: ['node-fetch'],

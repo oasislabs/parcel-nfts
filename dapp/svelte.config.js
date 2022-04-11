@@ -18,7 +18,7 @@ const config = {
       },
       server: {
         fs: {
-          allow: ['./emerald/lib'],
+          allow: ['../emerald/lib', '../integration/lib'],
         },
       },
       build: {

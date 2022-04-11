@@ -1,8 +1,6 @@
 import type { Signer } from '@ethersproject/abstract-signer';
 import type { DocumentId, EscrowedAsset, Identity, Token, TokenId } from '@oasislabs/parcel';
 import Parcel from '@oasislabs/parcel';
-import { EmeraldBridgeAdapterV1 } from '@oasislabs/parcel-evm-contracts';
-import { NFTFactory } from '@oasislabs/parcel-nfts-contracts';
 
 import { getOrCreateParcelIdentity, wrapErr } from './utils';
 
@@ -31,11 +29,13 @@ export async function downloadTokenizedData(
 ): Promise<void> {
   const signerAddr = await ethSigner.getAddress();
 
+  const [{ NFTFactory }, bridgeAdapter] = await Promise.all([
+    import('@oasislabs/parcel-nfts-contracts'),
+    import('@oasislabs/parcel-evm-contracts').then(async ({ EmeraldBridgeAdapterV1 }) => {
+      return EmeraldBridgeAdapterV1.connect(ethSigner, options?.bridgeAdapterAddress);
+    }),
+  ]);
   const nft = NFTFactory.connect(nftContractAddr, ethSigner);
-  const bridgeAdapter = await EmeraldBridgeAdapterV1.connect(
-    ethSigner,
-    options?.bridgeAdapterAddress,
-  );
 
   const unlockToken = async () => {
     console.log('downloadTokenizedData:', 'unlocking token');

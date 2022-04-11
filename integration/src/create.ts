@@ -2,9 +2,7 @@ import type { Signer } from '@ethersproject/abstract-signer';
 import type Parcel from '@oasislabs/parcel';
 import type { DocumentId, Token, TokenId } from '@oasislabs/parcel';
 import type { JSONSchemaType } from 'ajv';
-import Ajv from 'ajv';
-import addFormats from 'ajv-formats';
-import store2 from 'store2';
+import type store2 from 'store2';
 
 import type { NFT } from '@oasislabs/parcel-nfts-contracts';
 
@@ -17,14 +15,11 @@ function nftStorageLink(cid: string): string {
 type DirectoryStorer = (files: File[]) => Promise<string>;
 
 export class Bundle {
-  private readonly progress: typeof store2;
-
   private constructor(
     public readonly manifest: Manifest,
     private readonly files: Map<string, File>,
-  ) {
-    this.progress = store2.namespace(JSON.stringify([this.manifest.title, this.manifest.symbol]));
-  }
+    private readonly progress: typeof store2,
+  ) {}
 
   public static async create(filesList: FileList): Promise<Bundle> {
     const files = new Map<string, File>();
@@ -45,18 +40,19 @@ export class Bundle {
       throw new ValidationErrors([`Failed to load manifest.json: ${e}`]);
     }
 
+    const [{ default: Ajv }, { default: addFormats }, { default: store2 }] = await Promise.all([
+      import('ajv'),
+      import('ajv-formats'),
+      import('store2'),
+    ]);
     const ajv = addFormats(new Ajv({ allErrors: true }));
 
     const validate = ajv.compile(MANIFEST_SCHEMA);
     if (!validate(manifest)) {
       throw new ValidationErrors(
         validate.errors!.map((e: any) => {
-          let target;
-          if (e.instancePath === '') {
-            target = 'manifest';
-          } else {
-            target = `manifest.nfts[${e.instancePath.split('/')[2]}]`;
-          }
+          const path = e.instancePath.slice(1).replace(/\//g, '.') ?? 'root';
+          const target = path !== '' ? `manifest.${path}` : 'manifest';
           return `${target} ${e.message}`;
         }),
       );
@@ -82,7 +78,11 @@ export class Bundle {
       throw new ValidationErrors(validationErrors);
     }
 
-    return new Bundle(manifest, files);
+    return new Bundle(
+      manifest,
+      files,
+      store2.namespace(JSON.stringify([manifest.title, manifest.symbol])),
+    );
   }
 
   public async mint(

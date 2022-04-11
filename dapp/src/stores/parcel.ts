@@ -22,8 +22,8 @@ function makeParcel(ethAddr: string): Parcel {
     ethProviderUsingAccountIndex: 0,
   };
   return new Parcel(tokenProvider, {
-    apiUrl: 'http://localhost:4242/v1',
-    storageUrl: 'http://localhost:4244',
+    // apiUrl: 'http://localhost:4242/v1',
+    // storageUrl: 'http://localhost:4244',
   });
 }
 

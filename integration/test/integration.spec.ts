@@ -57,7 +57,7 @@ test('Parcel NFTs marketplace integration', async (t) => {
   const nftByUser = nft.connect(userWallet);
 
   const nftTokenId = 0;
-  await nftByCreator.mintTo(userWallet.address, 1); // Give the user an NFT, for convenience.
+  await nftByCreator.mintTo([userWallet.address], [1]); // Give the user an NFT, for convenience.
 
   const secretData = 'hunter2';
 

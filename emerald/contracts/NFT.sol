@@ -92,7 +92,7 @@ contract NFT is ERC721A, Ownable {
         }
         if (totalCount == 0) return;
         require(
-            _totalMinted() + totalCount < collectionSize,
+            _totalMinted() + totalCount <= collectionSize,
             "insufficient remaining items"
         );
 

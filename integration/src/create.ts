@@ -9,7 +9,7 @@ import type { NFT } from '@oasislabs/parcel-nfts-contracts';
 import { wrapErr } from './utils';
 
 function nftStorageLink(cid: string): string {
-  return 'https://nftstorage.link/ipfs/' + cid;
+  return `https://nftstorage.link/ipfs/${cid}/`;
 }
 
 type DirectoryStorer = (files: File[]) => Promise<string>;

@@ -49,11 +49,16 @@ export async function downloadTokenizedData(
   // Lock token into Parcel bridge adapter to recieve on Parcel (if not already).
   if ((await nft.callStatic.ownerOf(nftTokenId)) !== bridgeAdapter.address) {
     console.log('downloadTokenizedData: locking NFT into Parcel bridge adapter');
-    await nft['safeTransferFrom(address,address,uint256)'](
+    const tx = await nft['safeTransferFrom(address,address,uint256)'](
       signerAddr,
       bridgeAdapter.address,
       nftTokenId,
     );
+    console.log('downloadTokenizedData: bridge lock tx hash is', tx.hash);
+    const receipt = await tx.wait();
+    if (!receipt.status) {
+      throw new Error('locking token into bridge adapter failed');
+    }
   }
 
   // Authenticate to Parcel.
@@ -99,7 +104,7 @@ export async function downloadTokenizedData(
   waitForToken: try {
     for (
       let elapsedTime = 0;
-      elapsedTime < (options?.bridgeTimeoutSeconds ?? 15);
+      elapsedTime < (options?.bridgeTimeoutSeconds ?? 30);
       elapsedTime += 1
     ) {
       const { balance } = await parcelIdentity.getTokenBalance(parcelTokenId);

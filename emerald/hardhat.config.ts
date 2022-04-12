@@ -45,9 +45,8 @@ task(TASK_NFT_SET_BASE_URI, "Sets an NFT's base URI.")
     const signers = await ethers.getSigners();
     const NFT = await ethers.getContractFactory('NFT');
     const nft = NFT.connect(signers[0]).attach(args.nftAddr);
-    // const tx = await nft.setFinalBaseURI(args.baseUri);
-    // console.log(tx.hash);
-    console.log(await nft.callStatic.tokenURI(0));
+    const tx = await nft.setFinalBaseURI(args.baseUri);
+    console.log(tx.hash);
   });
 
 task(TASK_NFT_MINT_TO, 'Mints tokens to a set of addresses.')

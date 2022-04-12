@@ -162,8 +162,8 @@ export class Bundle {
     const nftContract = await nftFactory.deploy(
       this.manifest.title,
       this.manifest.symbol,
-      treasury,
       this.manifest.initialBaseUri ?? '',
+      treasury,
       this.manifest.nfts.length,
       this.manifest.minting.premintPrice,
       this.manifest.minting.maxPremintCount,

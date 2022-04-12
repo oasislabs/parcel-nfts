@@ -18,6 +18,7 @@ const config = {
       },
       ssr: false,
       build: {
+        sourcemap: true,
         rollupOptions: {
           external: ['node-fetch'],
         },

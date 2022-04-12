@@ -153,6 +153,7 @@ export class Bundle {
     const progressKey = 'nftContract';
     const createdContractAddr: string = this.progress.get(progressKey);
     if (createdContractAddr) {
+      console.log('mint: skipping deployment of contract. using', createdContractAddr);
       return NFTFactory.connect(createdContractAddr, signer);
     }
     // TODO: revenue sharing
@@ -199,7 +200,7 @@ export class Bundle {
       this.manifest.nfts.map(async (_, i) => {
         const name = `${this.manifest.title} #${i}`;
         if (createdTokens[name]) {
-          console.log('skipping creating parcel token with name', `${name}`);
+          console.log('mint: skipping creating parcel token with name', `${name}`);
           return parcel.getToken(createdTokens[name]);
         }
         const token = await parcel.mintToken({
@@ -280,10 +281,10 @@ export class Bundle {
           }).finished;
           tokDocs[token.id].id = doc.id;
         } else {
-          console.log(`skipping upload of token ${i}'s document`);
+          console.log(`mint: skipping upload of token ${i}'s document`);
         }
         if (tokDocs[token.id].tokenized) {
-          console.log('skipping tokenization of documents in token', i);
+          console.log('mint: skipping tokenization of documents in token', i);
           return;
         }
         await parcelTokens[i].addAsset(tokDocs[token.id].id!);

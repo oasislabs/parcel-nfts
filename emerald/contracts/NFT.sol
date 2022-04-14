@@ -5,7 +5,7 @@ import "erc721a/contracts/ERC721A.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract NFT is ERC721A, Ownable {
-    string private baseURI;
+    string public baseURI;
 
     uint256 public immutable collectionSize;
     uint256 public immutable maxPremintCount;

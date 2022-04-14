@@ -4,7 +4,7 @@ import type { DocumentId, Token, TokenId } from '@oasislabs/parcel';
 import type { JSONSchemaType } from 'ajv';
 import type store2 from 'store2';
 
-import type { NFT } from '@oasislabs/parcel-nfts-contracts';
+import type { NFT, RevenueShare } from '@oasislabs/parcel-nfts-contracts';
 
 import { wrapErr } from './utils';
 
@@ -108,7 +108,8 @@ export class Bundle {
     let nft: NFT;
     try {
       console.log('mint: deploying contract');
-      nft = await this.deployNFTContract(signer);
+      const treasury = await this.deployTreasuryContract(signer);
+      nft = await this.deployNFTContract(signer, treasury.address);
     } catch (e: any) {
       throw wrapErr(e, 'failed to create NFT contract');
     }
@@ -139,6 +140,18 @@ export class Bundle {
       throw wrapErr(e, 'failed to tokenize private data');
     }
 
+    try {
+      if (!this.manifest.initialBaseUri) {
+        const currentBaseUri = await nft.callStatic.baseURI();
+        if (currentBaseUri === '') {
+          const tx = await nft.setFinalBaseURI(nftStorageLink(metadatasCid));
+          console.log('mint: setting token base uri via', tx);
+        }
+      }
+    } catch (e: any) {
+      throw wrapErr(e, 'failed to set token base uri');
+    }
+
     const result = {
       address: nft.address,
       baseUri: nftStorageLink(metadatasCid),
@@ -148,22 +161,39 @@ export class Bundle {
     return result;
   }
 
-  private async deployNFTContract(signer: Signer): Promise<NFT> {
+  private async deployTreasuryContract(signer: Signer): Promise<RevenueShare> {
+    const { RevenueShareFactory } = await import('@oasislabs/parcel-nfts-contracts');
+    const progressKey = 'treasuryContract';
+    const createdContractAddr: string = this.progress.get(progressKey);
+    if (createdContractAddr) {
+      console.log('mint: skipping deployment of treasury contract. using', createdContractAddr);
+      return RevenueShareFactory.connect(createdContractAddr, signer);
+    }
+    // TODO: revenue sharing
+    const treasuryFactory = new RevenueShareFactory(signer);
+    const treasuryContract = await treasuryFactory.deploy(
+      ['0x45708C2Ac90A671e2C642cA14002C6f9C0750057', await signer.getAddress()],
+      [25, 975],
+    );
+    this.progress.set(progressKey, treasuryContract.address);
+    return treasuryContract;
+  }
+
+  private async deployNFTContract(signer: Signer, treasuryAddr: string): Promise<NFT> {
     const { NFTFactory } = await import('@oasislabs/parcel-nfts-contracts');
     const progressKey = 'nftContract';
     const createdContractAddr: string = this.progress.get(progressKey);
     if (createdContractAddr) {
-      console.log('mint: skipping deployment of contract. using', createdContractAddr);
+      console.log('mint: skipping deployment of nft contract. using', createdContractAddr);
       return NFTFactory.connect(createdContractAddr, signer);
     }
     // TODO: revenue sharing
-    const treasury = await signer.getAddress();
     const nftFactory = new NFTFactory(signer);
     const nftContract = await nftFactory.deploy(
       this.manifest.title,
       this.manifest.symbol,
       this.manifest.initialBaseUri ?? '',
-      treasury,
+      treasuryAddr,
       this.manifest.nfts.length,
       this.manifest.minting.premintPrice,
       this.manifest.minting.maxPremintCount,

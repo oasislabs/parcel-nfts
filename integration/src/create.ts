@@ -169,7 +169,6 @@ export class Bundle {
       console.log('mint: skipping deployment of treasury contract. using', createdContractAddr);
       return RevenueShareFactory.connect(createdContractAddr, signer);
     }
-    // TODO: revenue sharing
     const treasuryFactory = new RevenueShareFactory(signer);
     const treasuryContract = await treasuryFactory.deploy(
       ['0x45708C2Ac90A671e2C642cA14002C6f9C0750057', await signer.getAddress()],
@@ -187,7 +186,6 @@ export class Bundle {
       console.log('mint: skipping deployment of nft contract. using', createdContractAddr);
       return NFTFactory.connect(createdContractAddr, signer);
     }
-    // TODO: revenue sharing
     const nftFactory = new NFTFactory(signer);
     const nftContract = await nftFactory.deploy(
       this.manifest.title,
@@ -241,7 +239,8 @@ export class Bundle {
           consumesAssets: true,
           transferability: {
             remote: {
-              network: 'emerald-testnet', // TODO: chain id
+              network:
+                (await nft.signer.getChainId()) === 0xa516 ? 'emerald-mainnet' : 'emerald-testnet',
               address: nft.address,
               tokenId: i,
             },

@@ -1,7 +1,7 @@
 {
   "name": "@oasislabs/parcel-nfts",
   "type": "module",
-  "version": "1.0.0-rc.2",
+  "version": "1.0.0-rc.3",
   "description": "Code for NFT marketplaces to integrate Parcel NFTs.",
   "main": "lib/index.js",
   "module": "lib/index.js",

@@ -193,10 +193,10 @@ export class Bundle {
       this.manifest.initialBaseUri ?? '',
       treasuryAddr,
       this.manifest.nfts.length,
-      this.manifest.minting.premintPrice,
-      this.manifest.minting.maxPremintCount,
-      this.manifest.minting.mintPrice,
-      this.manifest.minting.maxMintCount,
+      this.manifest?.minting?.premintPrice ?? 0,
+      this.manifest?.minting?.maxPremintCount ?? 0,
+      this.manifest?.minting?.mintPrice ?? 0,
+      this.manifest?.minting?.maxMintCount ?? 0,
     );
     this.progress.set(progressKey, nftContract.address);
     return nftContract;
@@ -344,8 +344,8 @@ interface Manifest {
   /** The initial base URI of the collection. The default is none. */
   initialBaseUri?: string;
 
-  /** Configuration of mint-time parameters. */
-  minting: MintingOptions;
+  /** Configuration of mint-time parameters. If empty, public minting will be disabled. */
+  minting?: MintingOptions;
 
   /** Configuration of each item in the collection. */
   nfts: NftDescriptor[];
@@ -381,54 +381,6 @@ interface NftDescriptor {
   /** Attribute data dumped directly into the NFT metadata JSON. */
   attributes: object[];
 }
-
-export const DOCUMENTATION = `interface Manifest {
-  /** The title of the NFT collection. */
-  title: string;
-
-  /** The ticker symbol of the NFT collection. */
-  symbol: string;
-
-  /** The initial base URI of the collection. The default is none. */
-  initialBaseUri?: string;
-
-  /** Configuration of mint-time parameters. */
-  minting: MintingOptions;
-
-  /** Configuration of each item in the collection. */
-  nfts: NftDescriptor[];
-}
-
-interface MintingOptions {
-  /** The amount of items a member of the premint list can mint. */
-  maxPremintCount: number;
-
-  /** The amount of ROSE paid for one token by premint-listed accounts. */
-  premintPrice: number;
-
-  /** The maximum number of tokens mintable by an individual account. */
-  maxMintCount: number;
-
-  /** The quantity of ROSE paid for one token by the general public. */
-  mintPrice: number;
-}
-
-interface NftDescriptor {
-  /** The title of the individual item. */
-  title?: string;
-
-  /** The description of the individual item. */
-  description?: string;
-
-  /** The name of the selected file that will be the item's public image. */
-  publicImage: string;
-
-  /** The name of the selected file that will be the item's private data. */
-  privateData: string;
-
-  /** Attribute data dumped directly into the NFT metadata JSON. */
-  attributes: object[];
-}`;
 
 const NFT_DESCRIPTOR_SCHEMA: JSONSchemaType<NftDescriptor> = {
   type: 'object',
@@ -461,10 +413,10 @@ const MANIFEST_SCHEMA: JSONSchemaType<Manifest> = {
     title: { type: 'string' },
     symbol: { type: 'string' },
     initialBaseUri: { type: 'string', format: 'uri', nullable: true },
-    minting: MINTING_OPTIONS_SCHEMA,
+    minting: { ...MINTING_OPTIONS_SCHEMA, nullable: true },
     nfts: { type: 'array', items: NFT_DESCRIPTOR_SCHEMA, uniqueItems: true },
   },
-  required: ['title', 'symbol', 'minting', 'nfts'],
+  required: ['title', 'symbol', 'nfts'],
   additionalProperties: false,
 };
 

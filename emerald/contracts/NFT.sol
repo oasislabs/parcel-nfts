@@ -12,7 +12,7 @@ contract NFT is ERC721A, Ownable {
     uint256 public immutable maxMintCount;
     uint256 public immutable mintPrice;
     uint256 public immutable premintPrice;
-    address payable private immutable treasury;
+    address payable public immutable treasury;
 
     bool private hasSetFinalBaseURI;
     bool public hasBegunPublicSale;
@@ -29,8 +29,6 @@ contract NFT is ERC721A, Ownable {
         uint256 _maxMintCount
     ) ERC721A(_name, _symbol) {
         require(_collectionSize > 0, "_collectionSize == 0");
-        require(_maxPremintCount > 0, "_maxPremintCount == 0");
-        require(_maxMintCount > 0, "_maxMintCount == 0");
 
         baseURI = _initialBaseURI;
         treasury = _treasury;

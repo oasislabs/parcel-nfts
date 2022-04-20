@@ -2,7 +2,7 @@ import type { Signer } from '@ethersproject/abstract-signer';
 import type { Config as ParcelConfig } from '@oasislabs/parcel';
 import { Parcel } from '@oasislabs/parcel';
 
-export { Bundle, DOCUMENTATION as MANIFEST_TYPE_DOCS, ValidationErrors } from './create';
+export { Bundle, ValidationErrors } from './create';
 export { downloadTokenizedData } from './download';
 
 /** Creates a new Parcel instance provided an `ethers.Signer` or else the MetaMask account index. */

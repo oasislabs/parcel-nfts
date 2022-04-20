@@ -3,7 +3,7 @@
 
   import { NFTStorage } from 'nft.storage';
 
-  import { Bundle, MANIFEST_TYPE_DOCS, ValidationErrors } from '@oasislabs/parcel-nfts';
+  import { Bundle, ValidationErrors } from '@oasislabs/parcel-nfts';
 
   import { error } from '../stores/error';
   import {
@@ -16,6 +16,34 @@
     identity as parcelIdentity,
     connect as connectToParcel,
   } from '../stores/parcel';
+
+  const MANIFEST_TYPE_DOCS = `interface Manifest {
+  /** The title of the NFT collection. */
+  title: string;
+
+  /** The ticker symbol of the NFT collection. */
+  symbol: string;
+
+  /** Configuration of each item in the collection. */
+  nfts: NftDescriptor[];
+}
+
+interface NftDescriptor {
+  /** The title of the individual item. */
+  title?: string;
+
+  /** The description of the individual item. */
+  description?: string;
+
+  /** The name of the selected file that will be the item's public image. */
+  publicImage: string;
+
+  /** The name of the selected file that will be the item's private data. */
+  privateData: string;
+
+  /** Attribute data dumped directly into the NFT metadata JSON. */
+  attributes: object[];
+}`;
 
   let files: FileList;
   let bundle: Bundle | undefined = undefined;

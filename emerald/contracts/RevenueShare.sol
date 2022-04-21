@@ -15,9 +15,6 @@ contract RevenueShare {
     /// @dev should be calculated as `royaltyFee / totalRoyalty * denominator`.
     uint256 public immutable royaltyFeePercentNumerator;
 
-    uint256 public artistBalance;
-    uint256 public facilitatorBalance;
-
     constructor(
         address payable _artist,
         address payable _facilitator,
@@ -49,17 +46,9 @@ contract RevenueShare {
         splitPayment(msg.value, royaltyFeePercentNumerator);
     }
 
-    function disburse() external {
-        facilitator.transfer(facilitatorBalance);
-        facilitatorBalance = 0;
-        artist.transfer(artistBalance);
-        artistBalance = 0;
-        emit PaymentsDisbursed();
-    }
-
     function splitPayment(uint256 _amount, uint256 _numerator) internal {
         uint256 facilitatorFee = (_amount * _numerator) / denominator;
-        facilitatorBalance += facilitatorFee;
-        artistBalance += _amount - facilitatorFee;
+        facilitator.transfer(facilitatorFee);
+        artist.transfer(_amount - facilitatorFee);
     }
 }

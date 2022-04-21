@@ -73,7 +73,7 @@ contract NFT is ERC721A, ERC2981, Ownable {
         } else {
             require(
                 numMinted - premintedCount + _count <= maxMintCount,
-                "insufficient premint slots"
+                "insufficient mint slots"
             );
             price = mintPrice;
         }
@@ -139,6 +139,7 @@ contract NFT is ERC721A, ERC2981, Ownable {
     function setFinalBaseURI(string calldata _finalBaseURI) external onlyOwner {
         require(!hasSetFinalBaseURI, "final baseURI already set");
         baseURI = _finalBaseURI;
+        hasSetFinalBaseURI = true;
     }
 
     /// @dev See {IERC165-supportsInterface}.
@@ -154,6 +155,7 @@ contract NFT is ERC721A, ERC2981, Ownable {
             ERC2981.supportsInterface(interfaceId);
     }
 
+    /// @dev This interface is the way it is to support granting individualized premint slots.
     function setPremintCounts(
         address _owner,
         uint256 _slotCount,

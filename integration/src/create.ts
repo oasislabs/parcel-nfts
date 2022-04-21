@@ -14,12 +14,29 @@ function nftStorageLink(cid: string): string {
 
 type DirectoryStorer = (files: File[]) => Promise<string>;
 
+const MINTING_FEE_PERCENT = 5;
+const ROYALTY_FEE_PERCENT = 2.5;
+const DENOMINATOR = 10_000; // Used by ERC2981 and RevenueShare.
+
 export class Bundle {
   private constructor(
     public readonly manifest: Manifest,
     private readonly files: Map<string, File>,
     private readonly progress: typeof store2,
   ) {}
+
+  private get collectionSize(): number {
+    return this.manifest.nfts.length;
+  }
+
+  private get hasPublicMint(): boolean {
+    return !!this.manifest?.minting?.maxPremintCount || !!this.manifest?.minting?.maxMintCount;
+  }
+
+  /** Returns the total royalty percent (a number between 0 and 100). */
+  private get totalRoyaltyPercent(): number {
+    return this.manifest.creatorRoyalty + (this.hasPublicMint ? 0 : ROYALTY_FEE_PERCENT);
+  }
 
   public static async create(filesList: FileList): Promise<Bundle> {
     const files = new Map<string, File>();
@@ -107,9 +124,9 @@ export class Bundle {
     // 2: Create the NFT contract.
     let nft: NFT;
     try {
-      console.log('mint: deploying contract');
-      const treasury = await this.deployTreasuryContract(signer);
-      nft = await this.deployNFTContract(signer, treasury.address);
+      console.log('mint: deploying contracts');
+      const revenueShare = await this.deployRevenueShare(signer);
+      nft = await this.deployNFTContract(signer, revenueShare.address);
     } catch (e: any) {
       throw wrapErr(e, 'failed to create NFT contract');
     }
@@ -117,7 +134,7 @@ export class Bundle {
     // 3. Create parcel tokens.
     let parcelTokens: Token[];
     try {
-      console.log('mint: creating parcel tokens');
+      console.log('mint: creating Parcel tokens');
       parcelTokens = await this.createParcelTokens(parcel, nft);
     } catch (e: any) {
       throw wrapErr(e, 'failed to create Parcel tokens');
@@ -140,6 +157,7 @@ export class Bundle {
       throw wrapErr(e, 'failed to tokenize private data');
     }
 
+    // 6. Set token base URI to the uploaded one if this is not a blindbox launch.
     try {
       if (!this.manifest.initialBaseUri) {
         const currentBaseUri = await nft.callStatic.baseURI();
@@ -152,6 +170,22 @@ export class Bundle {
       throw wrapErr(e, 'failed to set token base uri');
     }
 
+    // 7. Pre-mint all of the tokens to the owner if there is no public mint.
+    try {
+      if (!this.hasPublicMint) {
+        const [creatorAddr, totalSupply] = await Promise.all([
+          signer.getAddress(),
+          nft.callStatic.totalSupply(),
+        ]);
+        if (totalSupply.toNumber() < this.collectionSize) {
+          const tx = await nft.mintTo([creatorAddr], [this.collectionSize]);
+          console.log('mint: minting all items to', creatorAddr, 'via', tx);
+        }
+      }
+    } catch (e: any) {
+      throw wrapErr(e, 'failed to mint all items to the creator');
+    }
+
     const result = {
       address: nft.address,
       baseUri: nftStorageLink(metadatasCid),
@@ -161,28 +195,33 @@ export class Bundle {
     return result;
   }
 
-  private async deployTreasuryContract(signer: Signer): Promise<RevenueShare> {
+  private async deployRevenueShare(signer: Signer): Promise<RevenueShare> {
     const { RevenueShareFactory } = await import('@oasislabs/parcel-nfts-contracts');
-    const progressKey = 'treasuryContract';
+    const progressKey = 'revenueShareContract';
     const createdContractAddr: string = this.progress.get(progressKey);
-    if (createdContractAddr) {
-      console.log('mint: skipping deployment of treasury contract. using', createdContractAddr);
+    if (createdContractAddr?.startsWith('0x')) {
+      console.log('mint: skipping deployment of RevenueShare. using', createdContractAddr);
       return RevenueShareFactory.connect(createdContractAddr, signer);
     }
-    const treasuryFactory = new RevenueShareFactory(signer);
-    const treasuryContract = await treasuryFactory.deploy(
-      ['0x45708C2Ac90A671e2C642cA14002C6f9C0750057', await signer.getAddress()],
-      [25, 975],
+    const revenueShareFactory = new RevenueShareFactory(signer);
+
+    const revenueShareContract = await revenueShareFactory.deploy(
+      await signer.getAddress(),
+      '0x45708C2Ac90A671e2C642cA14002C6f9C0750057',
+      (DENOMINATOR * MINTING_FEE_PERCENT) / 100,
+      this.hasPublicMint
+        ? 0
+        : Math.floor((DENOMINATOR * ROYALTY_FEE_PERCENT) / this.totalRoyaltyPercent),
     );
-    this.progress.set(progressKey, treasuryContract.address);
-    return treasuryContract;
+    this.progress.set(progressKey, revenueShareContract.address);
+    return revenueShareContract;
   }
 
-  private async deployNFTContract(signer: Signer, treasuryAddr: string): Promise<NFT> {
+  private async deployNFTContract(signer: Signer, revenueShareAddr: string): Promise<NFT> {
     const { NFTFactory } = await import('@oasislabs/parcel-nfts-contracts');
     const progressKey = 'nftContract';
     const createdContractAddr: string = this.progress.get(progressKey);
-    if (createdContractAddr) {
+    if (createdContractAddr?.startsWith('0x')) {
       console.log('mint: skipping deployment of nft contract. using', createdContractAddr);
       return NFTFactory.connect(createdContractAddr, signer);
     }
@@ -191,12 +230,13 @@ export class Bundle {
       this.manifest.title,
       this.manifest.symbol,
       this.manifest.initialBaseUri ?? '',
-      treasuryAddr,
-      this.manifest.nfts.length,
+      revenueShareAddr,
+      this.collectionSize,
       this.manifest?.minting?.premintPrice ?? 0,
       this.manifest?.minting?.maxPremintCount ?? 0,
       this.manifest?.minting?.mintPrice ?? 0,
       this.manifest?.minting?.maxMintCount ?? 0,
+      Math.round(this.totalRoyaltyPercent * 10_000),
     );
     this.progress.set(progressKey, nftContract.address);
     return nftContract;
@@ -228,7 +268,7 @@ export class Bundle {
       this.manifest.nfts.map(async (_, i) => {
         const name = `${this.manifest.title} #${i}`;
         if (createdTokens[name]) {
-          console.log('mint: skipping creating parcel token with name', `${name}`);
+          console.log('mint: skipping creating Parcel token with name', `${name}`);
           return parcel.getToken(createdTokens[name]);
         }
         const token = await parcel.mintToken({
@@ -344,8 +384,21 @@ interface Manifest {
   /** The initial base URI of the collection. The default is none. */
   initialBaseUri?: string;
 
-  /** Configuration of mint-time parameters. If empty, public minting will be disabled. */
+  /**
+   * Configuration of mint-time parameters.
+   * If empty, public minting will be disabled and all tokens will be minted upfront to the creator.
+   *
+   * This DApp will add a 5% minting fee.
+   */
   minting?: MintingOptions;
+
+  /**
+   * The percent of the secondary sale price to be paid to the creator (you) as royalty.
+   * A creator royalty of 2-8% is common in practice (all sale fees generally amount to under 10%).
+   *
+   * When public minting (and its fee) is disabled, a royalty of 2.5% will be added instead.
+   */
+  creatorRoyalty: number;
 
   /** Configuration of each item in the collection. */
   nfts: NftDescriptor[];
@@ -414,6 +467,7 @@ const MANIFEST_SCHEMA: JSONSchemaType<Manifest> = {
     symbol: { type: 'string' },
     initialBaseUri: { type: 'string', format: 'uri', nullable: true },
     minting: { ...MINTING_OPTIONS_SCHEMA, nullable: true },
+    creatorRoyalty: { type: 'number', minimum: 0, maximum: 20 },
     nfts: { type: 'array', items: NFT_DESCRIPTOR_SCHEMA, uniqueItems: true },
   },
   required: ['title', 'symbol', 'nfts'],

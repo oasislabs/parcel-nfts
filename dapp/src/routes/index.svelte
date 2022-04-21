@@ -24,6 +24,22 @@
   /** The ticker symbol of the NFT collection. */
   symbol: string;
 
+  /**
+   * Configuration of public mint parameters.
+   * If empty, public minting will be disabled and all tokens will be minted upfront to the creator.
+   *
+   * This DApp will add a 5% minting fee.
+   */
+  minting?: MintingOptions;
+
+  /**
+   * The percent of the secondary sale price to be paid to the creator (you) as royalty.
+   * A creator royalty of 2-8% is common in practice (all sale fees generally amount to under 10%).
+   *
+   * When public minting (and its fee) is disabled, a royalty of 2.5% will be added instead.
+   */
+  creatorRoyalty: number;
+
   /** Configuration of each item in the collection. */
   nfts: NftDescriptor[];
 }

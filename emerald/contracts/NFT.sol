@@ -2,9 +2,12 @@
 pragma solidity ^0.8.9;
 
 import "erc721a/contracts/ERC721A.sol";
+import "@openzeppelin/contracts/token/common/ERC2981.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract NFT is ERC721A, Ownable {
+import "./RevenueShare.sol";
+
+contract NFT is ERC721A, ERC2981, Ownable {
     string public baseURI;
 
     uint256 public immutable collectionSize;
@@ -12,7 +15,7 @@ contract NFT is ERC721A, Ownable {
     uint256 public immutable maxMintCount;
     uint256 public immutable mintPrice;
     uint256 public immutable premintPrice;
-    address payable public immutable treasury;
+    RevenueShare public immutable treasury;
 
     bool private hasSetFinalBaseURI;
     bool public hasBegunPublicSale;
@@ -21,17 +24,18 @@ contract NFT is ERC721A, Ownable {
         string memory _name,
         string memory _symbol,
         string memory _initialBaseURI,
-        address payable _treasury,
+        address _treasuryAddress,
         uint256 _collectionSize,
         uint256 _premintPrice,
         uint256 _maxPremintCount,
         uint256 _mintPrice,
-        uint256 _maxMintCount
+        uint256 _maxMintCount,
+        uint256 _creatorRoyaltyTimes10k
     ) ERC721A(_name, _symbol) {
         require(_collectionSize > 0, "_collectionSize == 0");
 
         baseURI = _initialBaseURI;
-        treasury = _treasury;
+        treasury = RevenueShare(payable(_treasuryAddress));
         collectionSize = _collectionSize;
 
         maxPremintCount = _maxPremintCount;
@@ -39,6 +43,8 @@ contract NFT is ERC721A, Ownable {
 
         maxMintCount = _maxMintCount;
         mintPrice = _mintPrice;
+
+        _setDefaultRoyalty(_treasuryAddress, uint96(_creatorRoyaltyTimes10k));
     }
 
     function mint(uint256 _count) external payable {
@@ -73,7 +79,7 @@ contract NFT is ERC721A, Ownable {
         }
 
         require(msg.value == price * _count, "incorrect payment amount");
-        treasury.transfer(msg.value);
+        treasury.receiveMintPayment{value: msg.value}();
 
         _safeMint(msg.sender, _count);
     }
@@ -133,6 +139,19 @@ contract NFT is ERC721A, Ownable {
     function setFinalBaseURI(string calldata _finalBaseURI) external onlyOwner {
         require(!hasSetFinalBaseURI, "final baseURI already set");
         baseURI = _finalBaseURI;
+    }
+
+    /// @dev See {IERC165-supportsInterface}.
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override(ERC721A, ERC2981)
+        returns (bool)
+    {
+        return
+            ERC721A.supportsInterface(interfaceId) ||
+            ERC2981.supportsInterface(interfaceId);
     }
 
     function setPremintCounts(

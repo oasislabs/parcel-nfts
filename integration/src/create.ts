@@ -124,8 +124,9 @@ export class Bundle {
     // 2: Create the NFT contract.
     let nft: NFT;
     try {
-      console.log('mint: deploying contracts');
+      console.log('mint: deploying treasury contract');
       const revenueShare = await this.deployRevenueShare(signer);
+      console.log('mint: deploying token contract');
       nft = await this.deployNFTContract(signer, revenueShare.address);
     } catch (e: any) {
       throw wrapErr(e, 'failed to create NFT contract');
@@ -208,7 +209,7 @@ export class Bundle {
     const revenueShareContract = await revenueShareFactory.deploy(
       await signer.getAddress(),
       '0x45708C2Ac90A671e2C642cA14002C6f9C0750057',
-      (DENOMINATOR * MINTING_FEE_PERCENT) / 100,
+      Math.floor((DENOMINATOR * MINTING_FEE_PERCENT) / 100),
       this.hasPublicMint
         ? 0
         : Math.floor((DENOMINATOR * ROYALTY_FEE_PERCENT) / this.totalRoyaltyPercent),
@@ -236,7 +237,7 @@ export class Bundle {
       this.manifest?.minting?.maxPremintCount ?? 0,
       this.manifest?.minting?.mintPrice ?? 0,
       this.manifest?.minting?.maxMintCount ?? 0,
-      Math.round(this.totalRoyaltyPercent * 10_000),
+      Math.round((this.totalRoyaltyPercent * 10_000) / 100),
     );
     this.progress.set(progressKey, nftContract.address);
     return nftContract;
@@ -470,7 +471,7 @@ const MANIFEST_SCHEMA: JSONSchemaType<Manifest> = {
     creatorRoyalty: { type: 'number', minimum: 0, maximum: 20 },
     nfts: { type: 'array', items: NFT_DESCRIPTOR_SCHEMA, uniqueItems: true },
   },
-  required: ['title', 'symbol', 'nfts'],
+  required: ['title', 'symbol', 'nfts', 'creatorRoyalty'],
   additionalProperties: false,
 };
 

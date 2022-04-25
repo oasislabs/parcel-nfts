@@ -13,6 +13,9 @@ import 'solidity-coverage';
 const TASK_EXPORT_ABIS = 'export-abis';
 const TASK_NFT_SET_BASE_URI = 'set-nft-base-uri';
 const TASK_NFT_MINT_TO = 'airdrop-nfts';
+const TASK_NFT_GET_ROYALTY = 'get-nft-royalty';
+const TASK_DESCRIBE_NFT = 'describe-nft';
+const TASK_DESRIBE_TREASURY = 'describe-treasury';
 
 task(TASK_COMPILE, async (_args, hre, runSuper) => {
   await runSuper();
@@ -75,6 +78,82 @@ task(TASK_NFT_MINT_TO, 'Mints tokens to a set of addresses.')
     const nft = NFT.connect(signers[0]).attach(args.nftAddr);
     const tx = await nft.mintTo(recipients, counts);
     console.log(tx.hash);
+  });
+
+task(TASK_NFT_GET_ROYALTY, 'Retrieves the royalty for the NFT item.')
+  .addParam('nftAddr', 'The NFT contract address.', null, types.string)
+  .addParam('tokenId', 'The token ID.', null, types.int)
+  .setAction(async (args) => {
+    const { ethers } = await import('hardhat');
+    const NFT = await ethers.getContractFactory('NFT');
+    const nft = NFT.attach(args.nftAddr).connect(ethers.provider);
+    const [_, royalty] = await nft.callStatic.royaltyInfo(args.tokenId, 10_000);
+    console.log(royalty.toNumber() / 10_000);
+  });
+
+task(TASK_DESCRIBE_NFT, 'Gets the details of the NFT.')
+  .addParam('nftAddr', 'The NFT contract address.', null, types.string)
+  .setAction(async (args) => {
+    const { ethers } = await import('hardhat');
+    const NFT = await ethers.getContractFactory('NFT');
+    const nft = NFT.attach(args.nftAddr).connect(ethers.provider);
+
+    const [treasury, hasBegunPublicSale, ...numericProps] = await Promise.all([
+      nft.callStatic.treasury(),
+      nft.callStatic.hasBegunPublicSale(),
+      nft.callStatic.collectionSize(),
+      nft.callStatic.maxPremintCount(),
+      nft.callStatic.premintPrice(),
+      nft.callStatic.maxMintCount(),
+      nft.callStatic.mintPrice(),
+    ]);
+    const [collectionSize, maxPremintCount, premintPrice, maxMintCount, mintPrice] =
+      numericProps.map((bn) => bn.toNumber());
+
+    console.log(
+      JSON.stringify(
+        {
+          treasury,
+          hasBegunPublicSale,
+          collectionSize,
+          maxPremintCount,
+          premintPrice,
+          maxMintCount,
+          mintPrice,
+        },
+        undefined,
+        2,
+      ),
+    );
+  });
+
+task(TASK_DESRIBE_TREASURY, 'Gets the details of the NFT treasury.')
+  .addParam('nftAddr', 'The NFT contract address.', null, types.string)
+  .setAction(async (args) => {
+    const { ethers } = await import('hardhat');
+    const NFT = await ethers.getContractFactory('NFT');
+    const nft = NFT.attach(args.nftAddr).connect(ethers.provider);
+    const treasury = await nft.callStatic.treasury();
+    console.log('treasury address:', treasury);
+    const RevenueShare = await ethers.getContractFactory('RevenueShare');
+    const revenueShare = RevenueShare.attach(treasury).connect(ethers.provider);
+    const [denominator, mintFee, royaltyFee] = (
+      await Promise.all([
+        revenueShare.callStatic.denominator(),
+        revenueShare.callStatic.mintFeePercentNumerator(),
+        revenueShare.callStatic.royaltyFeePercentNumerator(),
+      ])
+    ).map((bn) => bn.toNumber());
+    console.log(
+      JSON.stringify(
+        {
+          mintFee: (mintFee / denominator) * 100,
+          royaltyFee: (royaltyFee / denominator) * 100,
+        },
+        undefined,
+        2,
+      ),
+    );
   });
 
 const config: HardhatUserConfig = {

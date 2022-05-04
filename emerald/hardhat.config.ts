@@ -15,7 +15,7 @@ const TASK_NFT_SET_BASE_URI = 'set-nft-base-uri';
 const TASK_NFT_MINT_TO = 'airdrop-nfts';
 const TASK_NFT_GET_ROYALTY = 'get-nft-royalty';
 const TASK_DESCRIBE_NFT = 'describe-nft';
-const TASK_DESRIBE_TREASURY = 'describe-treasury';
+const TASK_DESCRIBE_TREASURY = 'describe-treasury';
 
 task(TASK_COMPILE, async (_args, hre, runSuper) => {
   await runSuper();
@@ -127,14 +127,13 @@ task(TASK_DESCRIBE_NFT, 'Gets the details of the NFT.')
     );
   });
 
-task(TASK_DESRIBE_TREASURY, 'Gets the details of the NFT treasury.')
+task(TASK_DESCRIBE_TREASURY, 'Gets the details of the NFT treasury.')
   .addParam('nftAddr', 'The NFT contract address.', null, types.string)
   .setAction(async (args) => {
     const { ethers } = await import('hardhat');
     const NFT = await ethers.getContractFactory('NFT');
     const nft = NFT.attach(args.nftAddr).connect(ethers.provider);
     const treasury = await nft.callStatic.treasury();
-    console.log('treasury address:', treasury);
     const RevenueShare = await ethers.getContractFactory('RevenueShare');
     const revenueShare = RevenueShare.attach(treasury).connect(ethers.provider);
     const [denominator, mintFee, royaltyFee] = (
@@ -147,6 +146,7 @@ task(TASK_DESRIBE_TREASURY, 'Gets the details of the NFT treasury.')
     console.log(
       JSON.stringify(
         {
+          treasury,
           mintFee: (mintFee / denominator) * 100,
           royaltyFee: (royaltyFee / denominator) * 100,
         },

@@ -33,6 +33,13 @@ export class Bundle {
     return !!this.manifest?.minting?.maxPremintCount || !!this.manifest?.minting?.maxMintCount;
   }
 
+  private get hasAirdrop(): boolean {
+    for (const item of this.manifest.nfts) {
+      if (item.owner) return true;
+    }
+    return false;
+  }
+
   /** Returns the total royalty percent (a number between 0 and 100). */
   private get totalRoyaltyPercent(): number {
     return this.manifest.creatorRoyalty + (this.hasPublicMint ? 0 : ROYALTY_FEE_PERCENT);
@@ -52,7 +59,7 @@ export class Bundle {
     if (manifestFile === undefined) {
       throw new ValidationErrors(['Missing manifest.json']);
     }
-    let manifest = Bundle.parseManifest(await manifestFile.text(), await ajvP);
+    const manifest = Bundle.parseManifest(await manifestFile.text(), await ajvP);
 
     const missing: string[] = [];
     const seen = new Set<string>();
@@ -81,11 +88,19 @@ export class Bundle {
       throw new ValidationErrors(validationErrors);
     }
 
-    return new Bundle(
+    const bundle = new Bundle(
       manifest,
       files,
       (await store2P).default.namespace(JSON.stringify([manifest.title, manifest.symbol])),
     );
+
+    if (bundle.hasPublicMint && bundle.hasAirdrop) {
+      throw new ValidationErrors([
+        'cannot automatically airdrop items when public minting is enabled',
+      ]);
+    }
+
+    return bundle;
   }
 
   private static async makeManifestValidator(): Promise<ValidateFunction<Manifest>> {
@@ -192,8 +207,8 @@ export class Bundle {
     }
 
     // 7. Pre-mint all of the tokens to the owner if there is no public mint.
-    try {
-      if (!this.hasPublicMint) {
+    if (!this.hasPublicMint) {
+      try {
         const [creatorAddr, totalSupply] = await Promise.all([
           signer.getAddress(),
           nft.callStatic.totalSupply(),
@@ -202,9 +217,42 @@ export class Bundle {
           const tx = await nft.mintTo([creatorAddr], [this.collectionSize]);
           console.log('mint: minting all items to', creatorAddr, 'via', tx);
         }
+      } catch (e: any) {
+        throw wrapErr(e, 'failed to mint all items to the creator');
       }
-    } catch (e: any) {
-      throw wrapErr(e, 'failed to mint all items to the creator');
+    }
+
+    if (this.hasAirdrop) {
+      try {
+        const creatorAddr = await signer.getAddress();
+        const airdrops: Array<[number, string]> = []; // id -> owner
+        for (let i = 0; i < this.manifest.nfts.length; i++) {
+          const { owner } = this.manifest.nfts[i];
+          if (owner) airdrops.push([i, owner]);
+        }
+        const currentOwners = await Promise.all(airdrops.map(([id]) => nft.callStatic.ownerOf(id)));
+        const remainingAirdrops: Array<[number, string]> = [];
+        for (let i = 0; i < airdrops.length; i++) {
+          const [id, intendedOwner] = airdrops[i];
+          const currentOwner = currentOwners[i];
+          if (currentOwner === creatorAddr && intendedOwner !== creatorAddr) {
+            remainingAirdrops.push([id, intendedOwner]);
+          }
+        }
+        const BATCH_SIZE = 200;
+        for (let i = 0; i < remainingAirdrops.length; i += BATCH_SIZE) {
+          const recipientsBatch = [];
+          const idsBatch = [];
+          for (let j = i; j < Math.min(i + BATCH_SIZE, remainingAirdrops.length); j++) {
+            const [id, recipient] = remainingAirdrops[j];
+            recipientsBatch.push(recipient);
+            idsBatch.push(id);
+          }
+          await nft.safeTransferFromBatch(creatorAddr, recipientsBatch, idsBatch);
+        }
+      } catch (e: any) {
+        throw wrapErr(e, 'failed to airdrop');
+      }
     }
 
     const result = {
@@ -458,7 +506,12 @@ interface NftDescriptor {
   /** Attribute data dumped directly into the NFT metadata JSON. */
   attributes: object[];
 
-  /** If set, the NFT will be airdropped into this wallet. No takebacks! */
+  /**
+   * If set, the NFT will be airdropped into this wallet.
+   * Auto-airdropping requires \`manifest.minting\` to be unset. If enabled,
+   * when this field is left unset, the item will be given to you.
+   * NFT setup may take a while if many items are to be airdropped.
+   */
   owner?: string;
 }
 

@@ -85,6 +85,17 @@ contract NFT is ERC721A, ERC2981, Ownable {
         _safeMint(msg.sender, _count);
     }
 
+    function safeTransferFromBatch(
+        address _from,
+        address[] calldata _recipients,
+        uint256[] calldata _tokenIds
+    ) external {
+        require(_recipients.length == _tokenIds.length, "mismatched lengths");
+        for (uint256 i; i < _recipients.length; ++i) {
+            safeTransferFrom(_from, _recipients[i], _tokenIds[i]);
+        }
+    }
+
     function mintTo(address[] calldata _recipients, uint256[] calldata _counts)
         external
         onlyOwner

@@ -2,7 +2,7 @@ import type { Signer } from '@ethersproject/abstract-signer';
 import type { DocumentId, EscrowedAsset, Identity, Token, TokenId } from '@oasislabs/parcel';
 import Parcel from '@oasislabs/parcel';
 
-import { getOrCreateParcelIdentity, wrapErr } from './utils';
+import { getOrCreateParcelIdentity, wrapErr } from './utils.js';
 
 /**
  * Downloads tokenized data from Parcel.

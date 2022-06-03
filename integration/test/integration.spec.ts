@@ -52,6 +52,7 @@ test('Parcel NFTs marketplace integration', async (t) => {
     1, // max premint count
     0, // mint price
     2, // max mint count
+    0, // creator royalty bps
   );
   const nftByCreator = nft;
   const nftByUser = nft.connect(userWallet);

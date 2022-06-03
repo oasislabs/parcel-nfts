@@ -103,7 +103,7 @@ contract NFT is ERC721A, ERC2981, Ownable {
 
         // Mint to owner and then transfer to avoid modifying `_numberMinted`,
         // which would affect minting eligibility.
-        uint256 tokenIx = _currentIndex;
+        uint256 tokenIx = _nextTokenId();
         _safeMint(owner(), totalCount);
         for (uint256 i; i < _recipients.length; ++i) {
             for (uint256 j; j < _counts[i]; ++j) {

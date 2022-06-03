@@ -21,7 +21,6 @@
     "@oasislabs/parcel-nfts-contracts": "workspace:../emerald",
     "@sveltejs/adapter-static": "^1.0.0-next.34",
     "@sveltejs/kit": "next",
-    "@types/prismjs": "^1.26.0",
     "ajv": "^8.11.0",
     "ajv-formats": "^2.1.1",
     "autoprefixer": "^10.4.7",

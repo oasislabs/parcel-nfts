@@ -1,12 +1,12 @@
 import type { Signer } from '@ethersproject/abstract-signer';
 import type Parcel from '@oasislabs/parcel';
 import type { DocumentId, Token, TokenId } from '@oasislabs/parcel';
-import type { JSONSchemaType } from 'ajv';
+import type { JSONSchemaType, ValidateFunction } from 'ajv';
 import type store2 from 'store2';
 
 import type { NFT, RevenueShare } from '@oasislabs/parcel-nfts-contracts';
 
-import { wrapErr } from './utils';
+import { wrapErr } from './utils.js';
 
 function nftStorageLink(cid: string): string {
   return `https://nftstorage.link/ipfs/${cid}/`;

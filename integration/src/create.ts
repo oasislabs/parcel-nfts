@@ -239,7 +239,13 @@ export class Bundle {
             remainingAirdrops.push([id, intendedOwner]);
           }
         }
-        const BATCH_SIZE = 200;
+        const BATCH_SIZE = 100;
+        console.log(
+          'mint: airdropping',
+          remainingAirdrops.length,
+          'items in batches of',
+          BATCH_SIZE,
+        );
         for (let i = 0; i < remainingAirdrops.length; i += BATCH_SIZE) {
           const recipientsBatch = [];
           const idsBatch = [];

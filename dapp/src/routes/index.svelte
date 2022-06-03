@@ -82,8 +82,8 @@ interface NftDescriptor {
 
   /**
    * If set, the NFT will be airdropped into this wallet.
-   * Auto-airdropping requires \`manifest.minting\` to be unset. If enabled,
-   * when this field is left unset, the item will be given to you.
+   * Auto-airdropping requires that \`manifest.minting\` is unset.
+   * In this case, items with no owner will be minted to you.
    * NFT setup may take a while if many items are to be airdropped.
    */
   owner?: string;

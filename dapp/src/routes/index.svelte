@@ -17,15 +17,18 @@
     connect as connectToParcel,
   } from '../stores/parcel';
 
-  const MANIFEST_TYPE_DOCS = `interface Manifest {
+const MANIFEST_TYPE_DOCS = `interface Manifest {
   /** The title of the NFT collection. */
   title: string;
 
   /** The ticker symbol of the NFT collection. */
   symbol: string;
 
+  /** The initial base URI of the collection. The default is none. */
+  initialBaseUri?: string;
+
   /**
-   * Configuration of public mint parameters.
+   * Configuration of mint-time parameters.
    * If empty, public minting will be disabled and all tokens will be minted upfront to the creator.
    *
    * This DApp will add a 5% minting fee.
@@ -40,8 +43,25 @@
    */
   creatorRoyalty: number;
 
+  /** Whether to allow duplicate public images and/or private data. The default is 'no'.*/
+  allowDuplicates?: 'no' | 'public' | 'private' | 'yes';
+
   /** Configuration of each item in the collection. */
   nfts: NftDescriptor[];
+}
+
+interface MintingOptions {
+  /** The amount of items a member of the premint list can mint. */
+  maxPremintCount: number;
+
+  /** The amount of ROSE paid for one token by premint-listed accounts. */
+  premintPrice: number;
+
+  /** The maximum number of tokens mintable by an individual account. */
+  maxMintCount: number;
+
+  /** The quantity of ROSE paid for one token by the general public. */
+  mintPrice: number;
 }
 
 interface NftDescriptor {
@@ -59,7 +79,10 @@ interface NftDescriptor {
 
   /** Attribute data dumped directly into the NFT metadata JSON. */
   attributes: object[];
-}`;
+
+  /** If set, the NFT will be airdropped into this wallet. No takebacks! */
+  owner?: string;
+}`
 
   let files: FileList;
   let bundle: Bundle | undefined = undefined;

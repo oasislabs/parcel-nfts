@@ -30,7 +30,7 @@ contract NFT is ERC721A, ERC2981, Ownable {
         uint256 _maxPremintCount,
         uint256 _mintPrice,
         uint256 _maxMintCount,
-        uint256 _creatorRoyaltyTimes10k
+        uint256 _creatorRoyaltyBps
     ) ERC721A(_name, _symbol) {
         require(_collectionSize > 0, "_collectionSize == 0");
 
@@ -44,7 +44,8 @@ contract NFT is ERC721A, ERC2981, Ownable {
         maxMintCount = _maxMintCount;
         mintPrice = _mintPrice;
 
-        _setDefaultRoyalty(_treasuryAddress, uint96(_creatorRoyaltyTimes10k));
+        require(_creatorRoyaltyBps < 10_000, "creatorRoyalty > 100%");
+        _setDefaultRoyalty(_treasuryAddress, uint96(_creatorRoyaltyBps));
     }
 
     function mint(uint256 _count) external payable {

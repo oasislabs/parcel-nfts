@@ -10,44 +10,37 @@ contract RevenueShare {
     address payable private immutable artist;
     address payable private immutable facilitator;
 
-    uint256 public constant denominator = 10_000;
-    uint256 public immutable mintFeePercentNumerator;
-    /// @dev should be calculated as `royaltyFee / totalRoyalty * denominator`.
-    uint256 public immutable royaltyFeePercentNumerator;
+    uint256 public immutable mintFeeBps;
+    /// @dev should be calculated as `royaltyFee / totalRoyalty * 10_000`.
+    uint256 public immutable royaltyFeeBps;
 
     constructor(
         address payable _artist,
         address payable _facilitator,
-        uint256 _mintFeePercentTimes10k,
-        uint256 _royaltyFeePercentTimes10k
+        uint256 _mintFeeBps,
+        uint256 _royaltyFeeBps
     ) {
-        require(
-            _mintFeePercentTimes10k <= denominator,
-            "mintFeePercent numerator > denominator"
-        );
-        require(
-            _royaltyFeePercentTimes10k <= denominator,
-            "royaltyFeePercent numerator > denominator"
-        );
+        require(_mintFeeBps <= 10_000, "mintFee > 100%");
+        require(_royaltyFeeBps <= 10_000, "royaltyFee > 100%");
 
         artist = _artist;
         facilitator = _facilitator;
-        mintFeePercentNumerator = _mintFeePercentTimes10k;
-        royaltyFeePercentNumerator = _royaltyFeePercentTimes10k;
+        mintFeeBps = _mintFeeBps;
+        royaltyFeeBps = _royaltyFeeBps;
     }
 
     function receiveMintPayment() external payable {
         emit MintPaymentReceived(msg.value);
-        splitPayment(msg.value, mintFeePercentNumerator);
+        splitPayment(msg.value, mintFeeBps);
     }
 
     receive() external payable {
         emit RoyaltyPaymentReceived(msg.value);
-        splitPayment(msg.value, royaltyFeePercentNumerator);
+        splitPayment(msg.value, royaltyFeeBps);
     }
 
     function splitPayment(uint256 _amount, uint256 _numerator) internal {
-        uint256 facilitatorFee = (_amount * _numerator) / denominator;
+        uint256 facilitatorFee = (_amount * _numerator) / 10_000;
         facilitator.transfer(facilitatorFee);
         artist.transfer(_amount - facilitatorFee);
     }

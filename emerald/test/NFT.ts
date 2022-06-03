@@ -1,3 +1,5 @@
+import { randomBytes } from 'crypto';
+
 import chai, { expect } from 'chai';
 import { Signer } from 'ethers';
 import { ethers } from 'hardhat';
@@ -18,6 +20,7 @@ describe('NFT', () => {
 
   async function deployNft(
     opts?: Partial<{
+      collectionSize: number;
       maxPremintCount: number;
       premintPrice: number;
       maxMintCount: number;
@@ -30,7 +33,7 @@ describe('NFT', () => {
       'TEST',
       '',
       revenueShare.address,
-      collectionSize,
+      opts?.collectionSize ?? collectionSize,
       opts?.premintPrice ?? 1,
       opts?.maxPremintCount ?? 3,
       opts?.mintPrice ?? 2,
@@ -75,6 +78,27 @@ describe('NFT', () => {
       }),
     );
     expect(balances).to.deep.equal(mintBalances);
+  });
+
+  it.only('batchTransfer', async () => {
+    const collectionSize = 200;
+    const nft = await deployNft({ collectionSize });
+    const owner = await nft.callStatic.owner();
+    expect(nft.mintTo([owner], [collectionSize])).not.to.be.reverted;
+
+    const recipients = [];
+    const ids = [];
+    for (let i = 0; i < collectionSize; i++) {
+      recipients.push('0x' + randomBytes(20).toString('hex'));
+      ids.push(i);
+    }
+    const transferTx = nft.safeTransferFromBatch(owner, recipients, ids);
+    expect(transferTx).not.to.be.reverted;
+    const receipt = await (await transferTx).wait();
+    const gasUsed = receipt.cumulativeGasUsed;
+    console.log(gasUsed, typeof gasUsed, gasUsed.constructor.name);
+    expect(gasUsed).to.be.lessThan(1_000_000);
+    expect(await nft.callStatic.balanceOf(recipients[collectionSize - 1])).to.equal(1);
   });
 
   it('tokenURI', async () => {

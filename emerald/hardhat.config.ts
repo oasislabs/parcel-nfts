@@ -87,7 +87,7 @@ task(TASK_NFT_GET_ROYALTY, 'Retrieves the royalty for the NFT item.')
     const { ethers } = await import('hardhat');
     const NFT = await ethers.getContractFactory('NFT');
     const nft = NFT.attach(args.nftAddr).connect(ethers.provider);
-    const [_, royalty] = await nft.callStatic.royaltyInfo(args.tokenId, 10_000);
+    const [, royalty] = await nft.callStatic.royaltyInfo(args.tokenId, 10_000);
     console.log(royalty.toNumber() / 10_000);
   });
 
@@ -198,7 +198,7 @@ const config: HardhatUserConfig = {
   },
   mocha: {
     require: ['ts-node/register/files'],
-    timeout: 20000,
+    timeout: 600_000,
   },
 };
 

@@ -17,7 +17,7 @@
     connect as connectToParcel,
   } from '../stores/parcel';
 
-const MANIFEST_TYPE_DOCS = `interface Manifest {
+  const MANIFEST_TYPE_DOCS = `interface Manifest {
   /** The title of the NFT collection. */
   title: string;
 
@@ -80,9 +80,14 @@ interface NftDescriptor {
   /** Attribute data dumped directly into the NFT metadata JSON. */
   attributes: object[];
 
-  /** If set, the NFT will be airdropped into this wallet. No takebacks! */
+  /**
+   * If set, the NFT will be airdropped into this wallet.
+   * Auto-airdropping requires \`manifest.minting\` to be unset. If enabled,
+   * when this field is left unset, the item will be given to you.
+   * NFT setup may take a while if many items are to be airdropped.
+   */
   owner?: string;
-}`
+}`;
 
   let files: FileList;
   let bundle: Bundle | undefined = undefined;

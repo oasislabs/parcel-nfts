@@ -3,12 +3,12 @@
   "version": "1.0.0-rc.5",
   "license": "MIT",
   "main": "lib/bundle.cjs",
-  "module": "lib/src/index.js",
-  "types": "lib/src/index.d.ts",
+  "module": "lib/src/index.mjs",
+  "types": "lib/src/index.d.mts",
   "scripts": {
     "lint": "solhint contracts/**.sol",
     "format": "solhint --fix contracts/**.sol",
-    "build": "hardhat compile && tsc -p tsconfig.esm.json && esbuild src/index.ts --platform=node --target=node16 --bundle --outfile=lib/bundle.cjs --minify",
+    "build": "hardhat compile && tsc -p tsconfig.esm.json && esbuild src/index.mts --platform=node --target=node16 --bundle --outfile=lib/bundle.cjs --minify",
     "watch": "hardhat watch",
     "test": "hardhat test",
     "prepublishOnly": "yarn build"

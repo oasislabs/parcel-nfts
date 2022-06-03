@@ -136,19 +136,18 @@ task(TASK_DESCRIBE_TREASURY, 'Gets the details of the NFT treasury.')
     const treasury = await nft.callStatic.treasury();
     const RevenueShare = await ethers.getContractFactory('RevenueShare');
     const revenueShare = RevenueShare.attach(treasury).connect(ethers.provider);
-    const [denominator, mintFee, royaltyFee] = (
+    const [mintFeeBps, royaltyFeeBps] = (
       await Promise.all([
-        revenueShare.callStatic.denominator(),
-        revenueShare.callStatic.mintFeePercentNumerator(),
-        revenueShare.callStatic.royaltyFeePercentNumerator(),
+        revenueShare.callStatic.mintFeeBps(),
+        revenueShare.callStatic.royaltyFeeBps(),
       ])
     ).map((bn) => bn.toNumber());
     console.log(
       JSON.stringify(
         {
           treasury,
-          mintFee: (mintFee / denominator) * 100,
-          royaltyFee: (royaltyFee / denominator) * 100,
+          mintFee: (mintFeeBps / 10_000) * 100,
+          royaltyFee: (royaltyFeeBps / 10_000) * 100,
         },
         undefined,
         2,

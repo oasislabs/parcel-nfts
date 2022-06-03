@@ -57,14 +57,21 @@ export class Bundle {
     const missing: string[] = [];
     const seen = new Set<string>();
     const dupes: string[] = [];
-    const checkMissingOrDuped = (fileName: string) => {
+    const checkMissing = (fileName: string) => {
       if (!files.has(fileName)) missing.push(fileName);
+    };
+    const checkDuped = (fileName: string) => {
       if (seen.has(fileName)) dupes.push(fileName);
       seen.add(fileName);
     };
+    const allowDupes = manifest?.allowDuplicates ?? 'no';
     for (const descriptor of manifest.nfts) {
-      checkMissingOrDuped(descriptor.publicImage);
-      checkMissingOrDuped(descriptor.privateData);
+      checkMissing(descriptor.publicImage);
+      checkMissing(descriptor.privateData);
+      if (allowDupes !== 'yes') {
+        if (allowDupes !== 'public') checkDuped(descriptor.publicImage);
+        if (allowDupes !== 'private') checkDuped(descriptor.privateData);
+      }
     }
     const validationErrors = [
       ...missing.map((f) => `Missing: ${f}.`),
@@ -414,6 +421,9 @@ interface Manifest {
    */
   creatorRoyalty: number;
 
+  /** Whether to allow duplicate public images and/or private data. The default is 'no'.*/
+  allowDuplicates?: 'no' | 'public' | 'private' | 'yes';
+
   /** Configuration of each item in the collection. */
   nfts: NftDescriptor[];
 }
@@ -486,7 +496,8 @@ const MANIFEST_SCHEMA: JSONSchemaType<Manifest> = {
     initialBaseUri: { type: 'string', format: 'uri', nullable: true },
     minting: { ...MINTING_OPTIONS_SCHEMA, nullable: true },
     creatorRoyalty: { type: 'number', minimum: 0, maximum: 20 },
-    nfts: { type: 'array', items: NFT_DESCRIPTOR_SCHEMA, uniqueItems: true },
+    allowDuplicates: { type: 'string', enum: ['no', 'public', 'private', 'yes'], nullable: true },
+    nfts: { type: 'array', items: NFT_DESCRIPTOR_SCHEMA },
   },
   required: ['title', 'symbol', 'nfts', 'creatorRoyalty'],
   additionalProperties: false,

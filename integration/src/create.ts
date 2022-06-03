@@ -39,6 +39,9 @@ export class Bundle {
   }
 
   public static async create(filesList: FileList): Promise<Bundle> {
+    const ajvP = Bundle.makeManifestValidator();
+    const store2P = import('store2');
+
     const files = new Map<string, File>();
     for (let i = 0; i < filesList.length; ++i) {
       const f = filesList[i];
@@ -49,31 +52,7 @@ export class Bundle {
     if (manifestFile === undefined) {
       throw new ValidationErrors(['Missing manifest.json']);
     }
-    let manifest: Manifest;
-    try {
-      const manifestData = await manifestFile.text();
-      manifest = JSON.parse(manifestData);
-    } catch (e) {
-      throw new ValidationErrors([`Failed to load manifest.json: ${e}`]);
-    }
-
-    const [{ default: Ajv }, { default: addFormats }, { default: store2 }] = await Promise.all([
-      import('ajv'),
-      import('ajv-formats'),
-      import('store2'),
-    ]);
-    const ajv = addFormats(new Ajv({ allErrors: true }));
-
-    const validate = ajv.compile(MANIFEST_SCHEMA);
-    if (!validate(manifest)) {
-      throw new ValidationErrors(
-        validate.errors!.map((e: any) => {
-          const path = e.instancePath.slice(1).replace(/\//g, '.') ?? 'root';
-          const target = path !== '' ? `manifest.${path}` : 'manifest';
-          return `${target} ${e.message}`;
-        }),
-      );
-    }
+    let manifest = Bundle.parseManifest(await manifestFile.text(), await ajvP);
 
     const missing: string[] = [];
     const seen = new Set<string>();
@@ -98,8 +77,42 @@ export class Bundle {
     return new Bundle(
       manifest,
       files,
-      store2.namespace(JSON.stringify([manifest.title, manifest.symbol])),
+      (await store2P).default.namespace(JSON.stringify([manifest.title, manifest.symbol])),
     );
+  }
+
+  private static async makeManifestValidator(): Promise<ValidateFunction<Manifest>> {
+    const [{ default: Ajv }, { default: addFormats }] = await Promise.all([
+      import('ajv'),
+      import('ajv-formats'),
+    ]);
+    const ajv = addFormats(new Ajv({ allErrors: true }));
+    ajv.addFormat('address', /^0x[\da-f]{40}$/i);
+    return ajv.compile(MANIFEST_SCHEMA);
+  }
+
+  private static parseManifest(
+    manifestJson: string,
+    validate: ValidateFunction<Manifest>,
+  ): Manifest {
+    let manifest: Manifest;
+    try {
+      manifest = JSON.parse(manifestJson);
+    } catch (e) {
+      throw new ValidationErrors([`Failed to load manifest.json: ${e}`]);
+    }
+
+    if (!validate(manifest)) {
+      throw new ValidationErrors(
+        validate.errors!.map((e: any) => {
+          const path = e.instancePath.slice(1).replace(/\//g, '.') ?? 'root';
+          const target = path !== '' ? `manifest.${path}` : 'manifest';
+          return `${target} ${e.message}`;
+        }),
+      );
+    }
+
+    return manifest;
   }
 
   public async mint(
@@ -434,6 +447,9 @@ interface NftDescriptor {
 
   /** Attribute data dumped directly into the NFT metadata JSON. */
   attributes: object[];
+
+  /** If set, the NFT will be airdropped into this wallet. No takebacks! */
+  owner?: string;
 }
 
 const NFT_DESCRIPTOR_SCHEMA: JSONSchemaType<NftDescriptor> = {
@@ -444,6 +460,7 @@ const NFT_DESCRIPTOR_SCHEMA: JSONSchemaType<NftDescriptor> = {
     publicImage: { type: 'string' },
     privateData: { type: 'string' },
     attributes: { type: 'array', items: { type: 'object' }, uniqueItems: true },
+    owner: { type: 'string', format: 'address', nullable: true },
   },
   required: ['publicImage', 'privateData'],
   additionalProperties: false,

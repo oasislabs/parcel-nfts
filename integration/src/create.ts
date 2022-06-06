@@ -200,6 +200,7 @@ export class Bundle {
         if (currentBaseUri === '') {
           const tx = await nft.setFinalBaseURI(nftStorageLink(metadatasCid));
           console.log('mint: setting token base uri via', tx);
+          await tx.wait();
         }
       }
     } catch (e: any) {
@@ -216,6 +217,7 @@ export class Bundle {
         if (totalSupply.toNumber() < this.collectionSize) {
           const tx = await nft.mintTo([creatorAddr], [this.collectionSize]);
           console.log('mint: minting all items to', creatorAddr, 'via', tx);
+          await tx.wait();
         }
       } catch (e: any) {
         throw wrapErr(e, 'failed to mint all items to the creator');
@@ -254,7 +256,8 @@ export class Bundle {
             recipientsBatch.push(recipient);
             idsBatch.push(id);
           }
-          await nft.safeTransferFromBatch(creatorAddr, recipientsBatch, idsBatch);
+          const tx = await nft.safeTransferFromBatch(creatorAddr, recipientsBatch, idsBatch);
+          await tx.wait();
         }
       } catch (e: any) {
         throw wrapErr(e, 'failed to airdrop');

@@ -101,7 +101,8 @@ interface NftDescriptor {
   async function processUploadBundle() {
     validationErrors = [];
     try {
-      bundle = await Bundle.create(files);
+      const signer = get(ethProvider)?.getSigner();
+      bundle = await Bundle.create(files, await signer?.getChainId()!);
     } catch (e: any) {
       if (e instanceof ValidationErrors) {
         validationErrors = e.validationErrors;

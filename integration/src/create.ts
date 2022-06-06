@@ -45,7 +45,7 @@ export class Bundle {
     return this.manifest.creatorRoyalty + (this.hasPublicMint ? 0 : ROYALTY_FEE_PERCENT);
   }
 
-  public static async create(filesList: FileList): Promise<Bundle> {
+  public static async create(filesList: FileList, chainId: number): Promise<Bundle> {
     const ajvP = Bundle.makeManifestValidator();
     const store2P = import('store2');
 
@@ -91,7 +91,7 @@ export class Bundle {
     const bundle = new Bundle(
       manifest,
       files,
-      (await store2P).default.namespace(JSON.stringify([manifest.title, manifest.symbol])),
+      (await store2P).default.namespace(JSON.stringify([chainId, manifest.title, manifest.symbol])),
     );
 
     if (bundle.hasPublicMint && bundle.hasAirdrop) {

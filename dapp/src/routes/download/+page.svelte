@@ -5,17 +5,17 @@
   import { downloadTokenizedData } from '@oasislabs/parcel-nfts';
   import { NFTFactory } from '@oasislabs/parcel-nfts-contracts';
 
-  import { error } from '../stores/error';
+  import { error } from '../../stores/error';
   import {
     provider as ethProvider,
     address as ethAddress,
     network as ethNetwork,
-  } from '../stores/eth';
+  } from '../../stores/eth';
   import {
     parcel as parcelStore,
     identity as parcelIdentity,
     connect as connectToParcel,
-  } from '../stores/parcel';
+  } from '../../stores/parcel';
 
   let nftContractAddr = '';
   let nftTokenId: number | undefined = undefined;

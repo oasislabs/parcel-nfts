@@ -96,18 +96,14 @@ export class Appendle {
   /** Returns the cost in ROSE of executing the appendle. */
   public async calculateCost(): Promise<number> {
     if (!this.#plan) throw new Error('calculateCost: not yet planned');
-    const { create, append } = this.#plan;
     let newFiles = 0;
     let newFilesSize = 0;
-    const tallyFiles = (files: File[]) => {
-      for (const file of files) {
+    this.#forEachFile((f, nftId) => {
+      if (!this.progress.get(filePaymentCacheKey(this.nft.address, nftId, f))) {
         newFiles += 1;
-        newFilesSize += file.size;
+        newFilesSize += f.size;
       }
-    };
-    for (const files of create.values()) tallyFiles(files);
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    for (const [_token, files] of append.values()) tallyFiles(files);
+    });
     return newFiles * COST_PER_FILE + (newFilesSize / 1024 / 1024) * COST_PER_GB;
   }
 
@@ -170,22 +166,24 @@ export class Appendle {
   }
 
   public async append(parcel: Parcel): Promise<void> {
-    if (!this.#plan) await this.plan(parcel);
-    if (!this.#paid) await this.requestPayment(this.nft.signer);
+    if (!this.#plan) throw new Error('append: not yet planned');
+    if (!this.#paid) throw new Error('append: not yet paid');
 
     const { create, append } = this.#plan;
+
+    const toUpload = new Map();
+    for (const [k, v] of append) toUpload.set(k, v);
 
     const createdNftTokenIds: Array<[NftId, TokenId]> = [];
     for (const [nftId, files] of create) {
       const progressKey = `token-${nftId}`;
-      if (append.has(nftId)) throw new Error(`append: ${nftId} has both create and append`);
       let token: Token;
       const cachedTokenId = this.progress.get(progressKey);
       if (cachedTokenId) {
         try {
           token = await parcel.getToken(this.progress.get(progressKey));
         } catch (e) {
-          throw wrapErr(e, `failed to get previoulsy-created Parcel token for NFT ID ${nftId}`);
+          throw wrapErr(e, `failed to get prevously created Parcel token for NFT ID ${nftId}`);
         }
       } else {
         try {
@@ -193,6 +191,7 @@ export class Appendle {
             grant: {
               condition: null, // Allow full access to the holder.
             },
+            consumesAssets: true,
             transferability: {
               remote: {
                 network: this.network,
@@ -207,7 +206,7 @@ export class Appendle {
         }
       }
       createdNftTokenIds.push([nftId, token.id]);
-      append.set(nftId, [token, files]);
+      toUpload.set(nftId, [token, files]);
     }
 
     try {
@@ -225,7 +224,7 @@ export class Appendle {
       throw wrapErr(e, 'failed to set Parcel tokens on NFT contract');
     }
 
-    for (const [nftId, [parcelToken, files]] of append) {
+    for (const [nftId, [parcelToken, files]] of toUpload) {
       for (const file of files) {
         const progressKey = `doc-id-${nftId}- ${file.name}`;
         let newAssetId = this.progress.get(progressKey);
@@ -263,7 +262,22 @@ export class Appendle {
     const mined = await tx.wait();
     if (mined.status !== 1) throw new Error(`payment tx ${tx.hash} failed`);
     this.#paid = mined.status === 1;
+    this.#forEachFile((f, nftId) => {
+      this.progress.set(filePaymentCacheKey(this.nft.address, nftId, f), true);
+    });
   }
+
+  #forEachFile(f: (f: File, nftId: NftId) => void): void {
+    if (!this.#plan) return;
+    const { create, append } = this.#plan;
+    for (const [nftId, files] of create) for (const file of files) f(file, nftId);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    for (const [nftId, [_token, files]] of append) for (const file of files) f(file, nftId);
+  }
+}
+
+function filePaymentCacheKey(nftAddr: string, nftId: NftId, f: File): string {
+  return `paid-${nftAddr}-${nftId}-${f.name}`;
 }
 
 function parseTokenIdU256(tokenIdU256: BigNumber): TokenId | null {

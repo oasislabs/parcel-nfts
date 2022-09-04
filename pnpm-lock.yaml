@@ -50,7 +50,7 @@ importers:
       '@oasislabs/parcel-nfts': link:../integration
       '@oasislabs/parcel-nfts-contracts': link:../emerald
       '@sveltejs/adapter-static': 1.0.0-next.41
-      '@sveltejs/kit': 1.0.0-next.468_qevq5tvhizyxp44gfhkn6m3ljq
+      '@sveltejs/kit': 1.0.0-next.469_qevq5tvhizyxp44gfhkn6m3ljq
       ajv: 8.11.0
       ajv-formats: 2.1.1_ajv@8.11.0
       autoprefixer: 10.4.8_postcss@8.4.16
@@ -137,7 +137,6 @@ importers:
   integration:
     specifiers:
       '@ava/typescript': ^3.0.1
-      '@ethersproject/abstract-provider': ^5.6.1
       '@ethersproject/abstract-signer': ^5.6.2
       '@oasislabs/parcel': 1.0.0-beta.24
       '@oasislabs/parcel-evm-contracts': ^2.0.0
@@ -155,7 +154,6 @@ importers:
       ts-node: ^10.8.0
       typescript: ^4.7.2
     dependencies:
-      '@ethersproject/abstract-provider': 5.7.0
       '@ethersproject/abstract-signer': 5.6.2
       '@oasislabs/parcel': 1.0.0-beta.24
       '@oasislabs/parcel-evm-contracts': 2.0.1
@@ -1625,8 +1623,8 @@ packages:
     resolution: {integrity: sha512-Bw6MfEuzuqjKZuVCG7ZHXiOIy/LDoRVR278eeAf4kcwl1B8+YEvChqdCvG2N5Ur+rxUIHstPgeX39HezS8d+mw==}
     dev: true
 
-  /@sveltejs/kit/1.0.0-next.468_qevq5tvhizyxp44gfhkn6m3ljq:
-    resolution: {integrity: sha512-IH1lQfSbY4efDtV8/gtVTv1cBbp8IPTeW25BN0e/ImT6xeThiODWMKHlr+zxLDHbI3jQ70uTJMZ+pFWpk5ZOtg==}
+  /@sveltejs/kit/1.0.0-next.469_qevq5tvhizyxp44gfhkn6m3ljq:
+    resolution: {integrity: sha512-gNQ52zeGpQo/Fl1jEK7pLFpt5Nl3SOvgR3a7dXVFYk+M6njAGmlhwlxianDp/iBa3T+Aky62L01ARnVP3DTCnw==}
     engines: {node: '>=16.14'}
     hasBin: true
     requiresBuild: true

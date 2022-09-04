@@ -102,7 +102,8 @@ interface NftDescriptor {
     validationErrors = [];
     try {
       const signer = get(ethProvider)?.getSigner();
-      bundle = await Bundle.create(files, await signer?.getChainId()!);
+      if (!signer) throw new ValidationErrors(['signer not connected']);
+      bundle = await Bundle.create(files, await signer.getChainId()!);
     } catch (e: any) {
       if (e instanceof ValidationErrors) {
         validationErrors = e.validationErrors;

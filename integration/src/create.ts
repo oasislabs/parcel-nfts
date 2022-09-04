@@ -6,6 +6,7 @@ import type store2 from 'store2';
 
 import type { NFT, RevenueShare } from '@oasislabs/parcel-nfts-contracts';
 
+import { ValidationErrors } from './index.js';
 import { wrapErr } from './utils.js';
 
 function nftStorageLink(cid: string): string {
@@ -564,14 +565,3 @@ const MANIFEST_SCHEMA: JSONSchemaType<Manifest> = {
   required: ['title', 'symbol', 'nfts', 'creatorRoyalty'],
   additionalProperties: false,
 };
-
-export class ValidationErrors {
-  constructor(public readonly validationErrors: string[]) {}
-
-  public appending(errorOrErrors: string | string[]): ValidationErrors {
-    return new ValidationErrors([
-      ...this.validationErrors,
-      ...(Array.isArray(errorOrErrors) ? errorOrErrors : [errorOrErrors]),
-    ]);
-  }
-}

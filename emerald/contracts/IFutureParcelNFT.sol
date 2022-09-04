@@ -13,6 +13,6 @@ interface IFutureParcelNFT is IERC165 {
         uint256[] calldata parcelTokenIds
     ) external;
 
-    /// @notice Returns the Parcel token ID associated with the NFT with token ID `tokenId`.
-    function getParcelToken(uint256 tokenId) external view;
+    /// @notice Returns the Parcel token ID associated with the NFT with token ID `tokenId` or zero if it does not exist.
+    function getParcelToken(uint256 tokenId) external view returns (uint256);
 }

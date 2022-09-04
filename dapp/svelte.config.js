@@ -8,22 +8,7 @@ const config = {
   preprocess: preprocess(),
 
   kit: {
-    prerender: {
-      default: true,
-    },
     adapter: adapter(),
-    vite: {
-      optimizeDeps: {
-        exclude: ['jsrsasign', 'node-fetch'],
-      },
-      ssr: false,
-      build: {
-        sourcemap: true,
-        rollupOptions: {
-          external: ['node-fetch'],
-        },
-      },
-    },
   },
 };
 

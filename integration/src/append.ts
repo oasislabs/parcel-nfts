@@ -108,6 +108,8 @@ export class Appendle {
   }
 
   public async plan(parcel: Parcel): Promise<void> {
+    if (this.#plan) return;
+
     const plan: Plan = { create: new Map(), append: new Map() };
 
     const nftIds = [...this.files.keys()];
@@ -226,7 +228,7 @@ export class Appendle {
 
     for (const [nftId, [parcelToken, files]] of toUpload) {
       for (const file of files) {
-        const progressKey = `doc-id-${nftId}- ${file.name}`;
+        const progressKey = `doc-id-${nftId}-${file.name}`;
         let newAssetId = this.progress.get(progressKey);
         if (!newAssetId) {
           try {
@@ -255,13 +257,18 @@ export class Appendle {
   public async requestPayment(signer: Signer): Promise<void> {
     if (!this.#plan) throw new Error('requestPayment: not yet planned');
     if (this.#paid) return;
-    const tx = await signer.sendTransaction({
-      to: '0x45708C2Ac90A671e2C642cA14002C6f9C0750057',
-      value: BigInt(await this.calculateCost()) * BigInt(1e18),
-    });
-    const mined = await tx.wait();
-    if (mined.status !== 1) throw new Error(`payment tx ${tx.hash} failed`);
-    this.#paid = mined.status === 1;
+    const cost = await this.calculateCost();
+    if (cost > 0) {
+      const tx = await signer.sendTransaction({
+        to: '0x45708C2Ac90A671e2C642cA14002C6f9C0750057',
+        value: BigInt(Math.ceil(cost * 1e10)) * BigInt(1e8),
+      });
+      const mined = await tx.wait();
+      if (mined.status !== 1) throw new Error(`payment tx ${tx.hash} failed`);
+      this.#paid = mined.status === 1;
+    } else {
+      this.#paid = true;
+    }
     this.#forEachFile((f, nftId) => {
       this.progress.set(filePaymentCacheKey(this.nft.address, nftId, f), true);
     });
@@ -282,7 +289,12 @@ function filePaymentCacheKey(nftAddr: string, nftId: NftId, f: File): string {
 
 function parseTokenIdU256(tokenIdU256: BigNumber): TokenId | null {
   if (tokenIdU256.isZero()) return null;
-  const tokenIdBytes = parseHex(tokenIdU256.toHexString().replace(/(00)+$/, ''));
+  const tokenIdBytes = parseHex(
+    tokenIdU256
+      .toHexString()
+      .replace('0x', '')
+      .replace(/(00)+$/, ''),
+  );
   return new TextDecoder().decode(tokenIdBytes) as TokenId;
 }
 

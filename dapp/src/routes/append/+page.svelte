@@ -24,6 +24,8 @@
   let creatingAppendle = false;
   let appending = false;
   let finished = false;
+  let paying = false;
+  let paid = false;
 
   function setAttributeWebkitdirectory(node: HTMLInputElement) {
     node.setAttribute('webkitdirectory', '');
@@ -33,9 +35,11 @@
     validationErrors = [];
     try {
       const signer = get(ethProvider)?.getSigner();
-      if (!nftAddr || !signer) return;
+      const parcel = get(parcelStore);
+      if (!nftAddr || !signer || !parcel) return;
       creatingAppendle = true;
       appendle = await Appendle.create(signer, nftAddr, files);
+      await appendle.plan(parcel);
       cost = await appendle.calculateCost();
     } catch (e: any) {
       if (e instanceof ValidationErrors) {
@@ -53,8 +57,13 @@
 
   async function payFee() {
     const signer = get(ethProvider)?.getSigner();
-    if (!appendle || !signer) return;
+      const parcel = get(parcelStore);
+    if (!appendle || !signer || !parcel) return;
+    paying = true;
+    await appendle.plan(parcel);
     await appendle.requestPayment(signer);
+    paying = false;
+    paid = appendle.paid;
   }
 
   async function appendFiles() {
@@ -64,12 +73,14 @@
     appendError = undefined;
     try {
       appending = true;
+      await appendle.plan(parcel);
       await appendle.append(parcel);
     } catch (e: any) {
       appendError = e;
       console.error(e);
     }
     appending = false;
+    finished = true;
   }
 </script>
 
@@ -104,7 +115,6 @@
           <p>The address of the NFT that will have private data added to it.</p>
           <input
             bind:value={nftAddr}
-            on:input={() => console.log(nftAddr)}
             placeholder="0x..."
             pattern="0x[A-Fa-f0-9]+"
             class="block my-2"
@@ -162,8 +172,8 @@
           >
             Begin upload
           </button>
-        {:else if cost && !appendle.paid}
-          <button on:click={payFee}>
+        {:else if appendle && !paid}
+          <button on:click={payFee} disabled={paying}>
             Pay {cost} ROSE
           </button>
         {:else if appendError}

@@ -104,7 +104,10 @@ export class Appendle {
         newFilesSize += f.size;
       }
     });
-    return newFiles * COST_PER_FILE + (newFilesSize / 1024 / 1024) * COST_PER_GB;
+    const fileCost = newFiles * COST_PER_FILE;
+    const dataCost = (newFilesSize / 1024 / 1024 / 1024) * COST_PER_GB;
+    const totalCost = fileCost + dataCost;
+    return Math.round(totalCost * 1000) / 1000;
   }
 
   public async plan(parcel: Parcel): Promise<void> {

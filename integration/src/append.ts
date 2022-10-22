@@ -63,6 +63,7 @@ export class Appendle {
     const files = new Map<number, File[]>();
     for (let i = 0; i < filesList.length; ++i) {
       const f = filesList[i];
+      if (f.name.startsWith('.')) continue;
       const path = f.webkitRelativePath;
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const [_rootDir, nftIdStr, _fileName, ...extraPath] = f.webkitRelativePath.split('/');
